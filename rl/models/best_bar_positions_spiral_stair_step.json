@@ -1,0 +1,9 @@
+{
+  "workpiece": "spiral_stair_step",
+  "bar_positions": [
+    222.5,
+    612.5
+  ],
+  "num_bars": 2,
+  "best_reward": 1009.0701619190295
+}

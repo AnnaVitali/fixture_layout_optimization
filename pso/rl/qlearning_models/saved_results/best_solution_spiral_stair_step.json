@@ -1,0 +1,25 @@
+{
+  "workpiece": "spiral_stair_step",
+  "num_fixtures": 3,
+  "moi": 2005513026.9297485,
+  "fixtures": [
+    {
+      "type": 1,
+      "x": 127.5,
+      "y": 117.5,
+      "angle": 0.0
+    },
+    {
+      "type": 2,
+      "x": 500.0,
+      "y": 97.5,
+      "angle": 0.0
+    },
+    {
+      "type": 2,
+      "x": 500.0,
+      "y": 267.5,
+      "angle": 0.0
+    }
+  ]
+}

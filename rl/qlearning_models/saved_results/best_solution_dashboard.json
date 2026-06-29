@@ -1,0 +1,25 @@
+{
+  "workpiece": "dashboard",
+  "num_fixtures": 3,
+  "moi": 4751356200.818327,
+  "fixtures": [
+    {
+      "type": 2,
+      "x": 760.0,
+      "y": 17.5,
+      "angle": 0.0
+    },
+    {
+      "type": 1,
+      "x": 7.5,
+      "y": 57.5,
+      "angle": 0.0
+    },
+    {
+      "type": 2,
+      "x": 340.0,
+      "y": 147.5,
+      "angle": 0.0
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "workpiece": "simple_stair_step",
+  "num_fixtures": 4,
+  "moi": 6167281205.277565,
+  "fixtures": [
+    {
+      "type": 1,
+      "x": 387.5,
+      "y": 27.5,
+      "angle": 0.0
+    },
+    {
+      "type": 2,
+      "x": 0.0,
+      "y": 27.5,
+      "angle": 0.0
+    },
+    {
+      "type": 1,
+      "x": 737.5,
+      "y": 67.5,
+      "angle": 0.0
+    },
+    {
+      "type": 2,
+      "x": 0.0,
+      "y": 197.5,
+      "angle": 0.0
+    }
+  ]
+}

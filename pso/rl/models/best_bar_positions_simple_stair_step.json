@@ -1,0 +1,9 @@
+{
+  "workpiece": "simple_stair_step",
+  "bar_positions": [
+    92.5,
+    602.5
+  ],
+  "num_bars": 2,
+  "best_reward": 1238.5333333333324
+}
