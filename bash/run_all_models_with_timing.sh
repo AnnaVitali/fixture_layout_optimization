@@ -67,6 +67,10 @@ process_workpiece() {
     run_model "cp_model" "$instance" "cp-sat"
     echo ""
 
+    echo "Running CP Model with Gurobi..."
+    run_model "cp_model" "$instance" "gurobi"
+    echo ""
+
     # LNS CP Model
     echo "Running LNS CP Model with Gecode..."
     run_model "LNS_cp_model" "$instance" "gecode"
@@ -78,9 +82,9 @@ process_workpiece() {
     echo ""
     
     # Integer MIP Model
-    echo "Running Integer MIP Model with Gurobi..."
-    run_model "int_mip_model" "$instance" "gurobi"
-    echo ""
+    #echo "Running Integer MIP Model with Gurobi..."
+    #run_model "int_mip_model" "$instance" "gurobi"
+    #echo ""
 }
 
 echo "======================================"

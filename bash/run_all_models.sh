@@ -52,6 +52,7 @@ process_workpiece() {
     run_model "cp_model" "$instance" "chuffed"
     run_model "cp_model" "$instance" "gecode"
     run_model "cp_model" "$instance" "cp-sat"
+    run_model "cp_model" "$instance" "gurobi"
 
     # LNS CP Model
     run_model "LNS_cp_model" "$instance" "gecode"
@@ -60,11 +61,13 @@ process_workpiece() {
     run_model "mip_model" "$instance" "gurobi"
 }
 
-process_workpiece "spiral_stair_step"
-process_workpiece "simple_stair_step"
-process_workpiece "dashboard"
-process_workpiece "speaker"
-process_workpiece "coffee_table"
+#process_workpiece "spiral_stair_step"
+#process_workpiece "simple_stair_step"
+#process_workpiece "dashboard"
+#process_workpiece "speaker"
+#process_workpiece "coffee_table"
+process_workpiece "door"
+process_workpiece "door_porthole"
 
 exit 0
 
