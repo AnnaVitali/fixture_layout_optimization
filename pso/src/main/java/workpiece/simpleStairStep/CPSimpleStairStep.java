@@ -25,7 +25,7 @@ import java.util.List;
 
 public class CPSimpleStairStep {
 
-    private static final String CP_FILE_PATH = "./resources/cp/cp_model_simple_stair_step_chuffed.json";
+    private static final String CP_FILE_PATH = "./resources/cp/LNS_cp_model_simple_stair_step_gecode.json";
     private static final String RESULT_FILE_PATH = "./resources/pso/pso_cp_simple_stair_step.json";
 
     public static void main(String[] args) {

@@ -35,6 +35,10 @@ public class MachineParameter {
         return HMIN;
     }
 
+    public static int getHorizontalSecurityDistance() {
+        return WMIN;  // WMIN (200) is the horizontal security buffer between fixture centers
+    }
+
     public static int getNTypes() {
         return NTYPES;
     }

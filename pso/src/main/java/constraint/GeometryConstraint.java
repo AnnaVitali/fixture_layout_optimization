@@ -70,9 +70,11 @@ public class GeometryConstraint {
                 if (cx1 != cx2 && Math.abs(cx1 - cx2) > 1) {
                     if (Math.abs(cx1 - cx2) < wMin + barWidth) {
                         penalty = penalty + 1;
-                        //System.out.println("cx1: " + cx1 + ", cx2: " + cx2);
+//                        System.out.println("cx1: " + cx1 + ", cx2: " + cx2);
 //                        System.out.println((Math.abs(cx1 - cx2)) + " < " + (wMin + barWidth));
-//                        System.out.println("Horizontal Security distance violation detected between fixture " + i + " and fixture " + j);
+//                        System.out.println("x1: " + fixtureI.getVertices().get(0).getFirst() + ", y1: " + fixtureI.getVertices().get(0).getSecond());
+//                        System.out.println("x2: " + fixtureJ.getVertices().get(0).getFirst() + ", y2: " + fixtureJ.getVertices().get(0).getSecond());
+//                        System.out.println("Horizontal Security distance violation detected between fixture " +  (i+1) + " and fixture " + (j+1));
 
                     }
                 }
@@ -86,7 +88,9 @@ public class GeometryConstraint {
 
                     if (!(yi + heightI + hMin <= yj || yj + heightJ + hMin <= yi)) {
                         penalty = penalty + 1;
-//                        System.out.println("Vertical Security distance violation detected between fixture " + i + " and fixture " + j);
+//                        System.out.println("x1: " + fixtureI.getVertices().get(0).getFirst() + ", y1: " + fixtureI.getVertices().get(0).getSecond());
+//                        System.out.println("x2: " + fixtureJ.getVertices().get(0).getFirst() + ", y2: " + fixtureJ.getVertices().get(0).getSecond());
+//                        System.out.println("Vertical Security distance violation detected between fixture " + (i+1) + " and fixture " + (j+1));
                     }
                 }
             }

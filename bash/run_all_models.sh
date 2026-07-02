@@ -49,13 +49,13 @@ process_workpiece() {
     local instance=$1
     
     # CP Model
-    run_model "cp_model" "$instance" "chuffed"
-    run_model "cp_model" "$instance" "gecode"
-    run_model "cp_model" "$instance" "cp-sat"
-    run_model "cp_model" "$instance" "gurobi"
+    #run_model "cp_model" "$instance" "chuffed"
+    #run_model "cp_model" "$instance" "gecode"
+    #run_model "cp_model" "$instance" "cp-sat"
+    #run_model "cp_model" "$instance" "gurobi"
 
     # LNS CP Model
-    run_model "LNS_cp_model" "$instance" "gecode"
+    #run_model "LNS_cp_model" "$instance" "gecode"
     
     # MIP Model
     run_model "mip_model" "$instance" "gurobi"

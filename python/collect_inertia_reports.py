@@ -9,9 +9,9 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PYTHON_DIR = PROJECT_ROOT / "python"
 PLOT_SCRIPT = PYTHON_DIR / "plot_result.py"
-SOLUTIONS_DIR = PROJECT_ROOT / "solutions" / "json_roberto_model"
+SOLUTIONS_DIR = PROJECT_ROOT / "solutions" / "json"
 REPORTS_DIR = PROJECT_ROOT / "solutions" / "reports"
-REPORT_FILE = REPORTS_DIR / "inertia_roberto_reports.txt"
+REPORT_FILE = REPORTS_DIR / "inertia_reports.txt"
 WORKPIECES_PATH = PYTHON_DIR / "resources" / "workpieces_information.json"
 
 I_J_PATTERN = re.compile(r"I \+ J:\s*([+-]?[0-9]*\.?[0-9]+(?:[eE][+-]?[0-9]+)?)")

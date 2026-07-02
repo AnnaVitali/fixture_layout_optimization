@@ -10,9 +10,8 @@ array[1..NTypes] of int: _NFix = [24, 12];
 array[0..NTypes] of int: WFix = array1d(0..NTypes, [0, 145, 180]);
 array[0..NTypes] of int: HFix = array1d(0..NTypes, [0, 145,  65]);
 
-int: minFix; % min no. of fixtures.
-int: maxFix; % max no. of fixtures.
-int: maxFixBars = 3;
+int: minFix;
+int: maxFix;
 
 array [1..maxFix] of var 0..WTab: x;
 array [1..maxFix] of var 0..HTab: y;
@@ -48,7 +47,7 @@ let {
   2*yc(i) - 2*y[i] = wy /\
   wx >= wy
 );
-% Balancing fixtures: aorund half must stay in bottom-left part of the tab.
+
 constraint forall (i in 1..n div 2) (
   2*x[i] <= max(x) - min(x) + 1 /\ 
   2*y[i] <= max(y) - min(y) + 1
@@ -118,28 +117,4 @@ output [
   "}\n"
 ];
 
-% % Coffee table con Chuffed:
-% {
-% "x": [206, 206, 206, 551, 551, 551, 881, 899, 899],
-% "y": [30, 275, 520, 0, 245, 554, 562, 72, 317],
-% "x1": [206, 206, 206, 551, 551, 551, 881, 899, 899],
-% "y1": [175, 420, 665, 145, 390, 699, 627, 217, 462],
-% "x2": [351, 351, 351, 696, 696, 696, 1061, 1044, 1044],
-% "y2": [175, 420, 665, 145, 390, 699, 627, 217, 462],
-% "x3": [351, 351, 351, 696, 696, 696, 1061, 1044, 1044],
-% "y3": [30, 275, 520, 0, 245, 554, 562, 72, 317],
-% "angle": [0, 0, 0, 0, 0, 0, 0, 0, 0],
-% "fixtures_center_x": [278.5, 278.5, 278.5, 623.5, 623.5, 623.5, 971.0, 971.5, 971.5],
-% "fixtures_center_y": [102.5, 347.5, 592.5, 72.5, 317.5, 626.5, 594.5, 144.5, 389.5],
-% "bars_center": [278, 278, 278, 623, 623, 623, 971, 971, 971],
-% "selected_fixture": [1, 1, 1, 1, 1, 1, 1, 1, 1],
-% "fixture_type": [1, 1, 1, 1, 1, 1, 2, 1, 1],
-% "objective_value": 201694
-% }
-% ----------
-% ==========
-% % [X_INTRODUCED_49_ <= 201694]
-% real 63.67
-% user 63.50
-% sys 0.15
 

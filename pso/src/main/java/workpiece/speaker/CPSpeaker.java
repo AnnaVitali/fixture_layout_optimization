@@ -25,7 +25,7 @@ import java.util.List;
 
 public class CPSpeaker {
 
-    private static final String CP_FILE_PATH = "./resources/cp/cp_model_speaker_cp-sat.json";
+    private static final String CP_FILE_PATH = "./resources/cp/cp_model_speaker_gurobi.json";
     private static final String RESULT_FILE_PATH = "./resources/pso/pso_cp_speaker.json";
 
     public static void main(String[] args) {

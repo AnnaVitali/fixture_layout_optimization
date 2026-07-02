@@ -10,9 +10,8 @@ array[1..NTypes] of int: _NFix = [24, 12];
 array[0..NTypes] of int: WFix = array1d(0..NTypes, [0, 145, 180]);
 array[0..NTypes] of int: HFix = array1d(0..NTypes, [0, 145,  65]);
 
-int: minFix; % min no. of fixtures.
-int: maxFix; % max no. of fixtures.
-int: maxFixBars = 3;
+int: minFix;
+int: maxFix;
 
 array [1..maxFix] of var 0..WTab: x;
 array [1..maxFix] of var 0..HTab: y;
@@ -35,14 +34,23 @@ xc(var 0..maxFix: i) ::promise_total = (x[i] + (WFix[t[i]] div 2));
 function var int:
 yc(var 0..maxFix: i) ::promise_total = (y[i] + (HFix[t[i]] div 2));
 
+% Redundant constraints to better handle xc and yc division by 2.
 constraint forall(i in 1..maxFix) (
 let {
   var {0, 144, 180}: wx = WFix[t[i]] - (WFix[t[i]] mod 2);
   var {0, 144,  64}: wy = HFix[t[i]] - (HFix[t[i]] mod 2);
+  var 1..3: b = t[i] + 1;
 } in
+  wx = [0, 144, 180][b] /\
+  wy = [0, 144,  64][b] /\
   2*xc(i) - 2*x[i] = wx /\
   2*yc(i) - 2*y[i] = wy /\
   wx >= wy
+);
+
+constraint forall (i in 1..n div 2) (
+  2*x[i] <= max(x) - min(x) + 1 /\ 
+  2*y[i] <= max(y) - min(y) + 1
 );
 
 constraint n = sum(_n);
@@ -74,15 +82,19 @@ let {
   var int: x1 = x[i] + WFix[t[i]];
   var int: y1 = y[i] + HFix[t[i]];
 } in
-  ineq_coeff[j, 1] * x[i] + ineq_coeff[j, 2] * y[i] + ineq_coeff[j, 3] * x1 + ineq_coeff[j, 4] * y1 + ineq_coeff[j, 5] <= 0
+  ineq_coeff[j, 1] * x[i] +
+  ineq_coeff[j, 2] * y[i] +
+  ineq_coeff[j, 3] * x1   +
+  ineq_coeff[j, 4] * y1   +
+  ineq_coeff[j, 5] <= 0
 );
 
 % Maximize distance between pairs of centroids plus sum widths + heights
 solve
-  :: restart_constant(1000)
-  :: relax_and_reconstruct(x ++ y, 60)
+   :: restart_constant(1000)
+   :: relax_and_reconstruct(x, 80)
  maximize sum(i, j in 1..n where i < j)(
-abs(xc(i) - xc(j)) + abs(yc(i) - yc(j))
+   abs(xc(j) - xc(i)) + abs(yc(j) - yc(i))
 ) + sum(i in 1..n)(WFix[t[i]] * HFix[t[i]]);
 
 output [
@@ -104,3 +116,5 @@ output [
   "\"objective_value\": ", show(_objective), "\n",
   "}\n"
 ];
+
+

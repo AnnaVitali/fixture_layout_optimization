@@ -179,8 +179,8 @@ output [
   "\"fixtures_center_x\": ", show([xc[i] | i in 1..maxFix where S[i] = 1]), ",\n",
   "\"fixtures_center_y\": ", show([yc[i] | i in 1..maxFix where S[i] = 1]), ",\n",
   "\"bars_center\": ", show([x[i] + (wx[i] / 2) | i in 1..maxFix where S[i] = 1]), ",\n",
-  "\"selected_fixture\": ", show([1 | i in 1..maxFix, j in 1..NTypes]), ",\n",
-  "\"T\": ", show([[T[i,j] | j in 1..NTypes] | i in 1..maxFix]), ",\n",
+  "\"selected_fixture\": ", show([1 | i in 1..maxFix, j in 1..NTypes where T[i, j] == 1]), ",\n",
+  "\"fixture_type\": ", show([j * T[i, j] | i in 1..maxFix, j in 1..NTypes where T[i, j] == 1]), ",\n",
   "\"objective_value\": ", show(_objective), "\n",
   "}\n"
 ];

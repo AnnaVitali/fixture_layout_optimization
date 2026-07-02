@@ -83,20 +83,16 @@ public class RLSpiralStairStep {
         long endTimePSO =  System.currentTimeMillis();
         System.out.println("PSO Time: " + (endTimePSO - startTimePSO) + " ms");
 
-//        ConstraintsChecker constraintsChecker = new ConstraintsChecker(geometryConstraint, noOverlapConstraint, fixtureConstraints);
-//        MovementOperator movementOperator = new MovementOperator(5.0);
-//        RotationOperator rotationOperator = new RotationOperator(15.0);
-//
-//        HillClimbing hillClimbing = new HillClimbing(constraintsChecker, movementOperator, rotationOperator, 1000);
-//        double[][] bestSolution = hillClimbing.optimize(bestSolutionPSO);
-//
-//        List<Fixture> finalFixtures = FixtureUtility.getFixturesFromPosition(bestSolution);
-//        List<Rectangle> rectangles = FixtureUtility.getRectangleFromFixture(finalFixtures, bestSolution[Variable.T.getId()]);
-//        SaveResult.saveResult(RESULT_FILE_PATH, bestSolution, geometryConstraint, fixtureConstraints, noOverlapConstraint, rectangles);
+        ConstraintsChecker constraintsChecker = new ConstraintsChecker(geometryConstraint, noOverlapConstraint, fixtureConstraints);
+        MovementOperator movementOperator = new MovementOperator(5.0);
+        RotationOperator rotationOperator = new RotationOperator(15.0);
 
+        HillClimbing hillClimbing = new HillClimbing(constraintsChecker, movementOperator, rotationOperator, 1000);
+        double[][] bestSolution = hillClimbing.optimize(bestSolutionPSO);
 
-
-
+        List<Fixture> finalFixtures = FixtureUtility.getFixturesFromPosition(bestSolution);
+        List<Rectangle> rectangles = FixtureUtility.getRectangleFromFixture(finalFixtures, bestSolution[Variable.T.getId()]);
+        SaveResult.saveResult(RESULT_FILE_PATH, bestSolution, geometryConstraint, fixtureConstraints, noOverlapConstraint, rectangles);
     }
 
 }

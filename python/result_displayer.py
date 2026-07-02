@@ -211,4 +211,5 @@ class ResultDisplayer:
         filename = f"{self.workpiece_name}_{provider}.png"
         output_dir = Path(IMAGE_OUTPUT_DIR)
         output_dir.mkdir(parents=True, exist_ok=True)
+        #plt.show()
         plt.savefig(output_dir / filename)

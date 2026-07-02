@@ -275,10 +275,10 @@ public class ParticleSwarmOptimization {
         }
 
 
-        //System.out.println("Geometry violation: " + violation);
+//        System.out.println("Geometry violation: " + violation);
 
         violation += geometryConstraint.computePenaltySecurityDistanceViolation(repairedFixtures);
-        //System.out.println("Security distance violation: " + violation);
+//        System.out.println("Security distance violation: " + violation);
         violation += fixtureConstraints.computePenaltyFixtureViolation(t);
         //System.out.println("Fixture type violation: " + violation);
         violation += noOverlapConstraint.computePenaltyOverlapBetweenFixtures(rectangles);

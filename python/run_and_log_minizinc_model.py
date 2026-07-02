@@ -8,9 +8,9 @@ from datetime import datetime
 import argparse
 
 
-JSON_OUTPUT_DIR = "../solutions/json_roberto_model"        
+JSON_OUTPUT_DIR = "../solutions/json"        
 REPORTS_OUTPUT_DIR = "../solutions/reports"  
-RUNTIME_REPORT_FILE = "runtime_roberto_reports.txt"
+RUNTIME_REPORT_FILE = "runtime_reports.txt"
 
 
 def run_minizinc(model_file, data_file, solver='gecode', timeout=None, all_solutions=True):
@@ -271,16 +271,32 @@ def main():
     all_solutions = not args.no_all_solutions
     result = run_minizinc(args.model, args.data, args.solver, args.timeout, all_solutions)
     
+    # Handle case where no solution was found
+    if result is None:
+        print("[!] No solution found (UNSATISFIABLE or timeout with no feasible solution)")
+        
+        # Log to report with "--" for objective
+        wall_time = args.timeout if args.timeout else None
+        Path(REPORTS_OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+        append_to_log(args.output, model_name, instance_name, "--", runtime=wall_time, init_time=None, solve_time=None, solver=args.solver)
+        
+        print("-" * 60)
+        print(f"[!] Objective: --")
+        print(f"[!] Init Time (s): N/A")
+        print(f"[!] Solve Time (s): N/A")
+        print(f"[!] Runtime (s): {wall_time if wall_time else 'N/A'}")
+        print(f"[!] Solver: {args.solver}")
+        print(f"[!] Solution: NONE (UNSATISFIABLE)")
+        print(f"[!] Report saved to: {args.output}")
+        print("[!] Continuing with next instance...")
+        sys.exit(0)  # Clean exit for no-solution case
+    
     file_name = model_name + "_" + instance_name + "_" + args.solver + ".json"
     output_file = Path(JSON_OUTPUT_DIR) / file_name
     
     output_file.parent.mkdir(parents=True, exist_ok=True)
     with open(output_file, "w") as f:
         json.dump(result["data"], f, indent=4)
-    
-    if result is None:
-        print("Execution failed.")
-        sys.exit(1)
     
     objective_value = result['data'].get('objective_value', None)
     wall_time = result.get('wall_time', None)
@@ -306,7 +322,11 @@ def main():
     
     if objective_value is None:
         print("Unable to find objective value.")
-        sys.exit(1)
+        # Log as no-solution instead of exiting
+        Path(REPORTS_OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+        append_to_log(args.output, model_name, instance_name, "--", runtime=args.timeout, init_time=None, solve_time=None, solver=args.solver)
+        print(f"[!] Report saved to: {args.output}")
+        sys.exit(0)  # Clean exit for objective parsing failure
     
     Path(REPORTS_OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
     
@@ -333,6 +353,7 @@ def main():
         print(f"[OK] Solution: FEASIBLE (not proven optimal)")
     print(f"[OK] Saved JSON to: {output_file}")
     print(f"[OK] Saved report to: {args.output}")
+    sys.exit(0)  # Explicit clean exit
 
 
 if __name__ == '__main__':
@@ -340,4 +361,7 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         print("\n\nExecution interrupted by user (Ctrl+C)", file=sys.stderr)
-        sys.exit(130)
+        sys.exit(0)  # Exit gracefully with code 0 to allow other instances to run
+    except Exception as e:
+        print(f"\n\nUnexpected error: {e}", file=sys.stderr)
+        sys.exit(0)  # Exit gracefully to allow shell script to continue
