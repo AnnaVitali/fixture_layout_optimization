@@ -20,14 +20,11 @@ def create_grid_image(area_dir: Path, semi_perimeter_dir: Path, output_path: Pat
     if not semi_perimeter_dir.exists():
         raise FileNotFoundError(f"Semi-perimeter directory not found: {semi_perimeter_dir}")
     
-    # Define desired order
     order = ["spiral_stair_step", "simple_stair_step", "dashboard", "speaker", "coffee_table"]
     
-    # Get all images from both directories and sort by order
     area_images = {f.stem: f for f in area_dir.glob("*.png")}
     semi_perimeter_images = {f.stem: f for f in semi_perimeter_dir.glob("*.png")}
     
-    # Find common image names and sort them
     common_names = set(area_images.keys()) & set(semi_perimeter_images.keys())
     
     def sort_key(name):
@@ -49,14 +46,12 @@ def create_grid_image(area_dir: Path, semi_perimeter_dir: Path, output_path: Pat
     if rows == 1:
         axes = axes.reshape(1, cols)
     
-    # First column: area images
     for row, name in enumerate(sorted_names):
         ax = axes[row, 0]
         img = mpimg.imread(area_images[name])
         ax.imshow(img)
         ax.axis("off")
     
-    # Second column: semi-perimeter images
     for row, name in enumerate(sorted_names):
         ax = axes[row, 1]
         img = mpimg.imread(semi_perimeter_images[name])

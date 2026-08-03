@@ -2,7 +2,7 @@
 
 We compared the solutions obtained using the CP and MIP models with those produced by a Q-learning based algorithm.
 
-In Q-learning, an agent learns through repeated interactions with the environment by estimating the action-value function \(Q(s,a)\), which represents the expected \textit{cumulative discounted reward}• obtained by executing action \(a\) in state \(s\) and subsequently following the optimal policy~\cite{watkins1992q}.
+In Q-learning, an agent learns through repeated interactions with the environment by estimating the action-value function \(Q(s,a)\), which represents the expected \textit{cumulative discounted reward} obtained by executing action \(a\) in state \(s\) and subsequently following the optimal policy~\cite{watkins1992q}.
 
 After each interaction, the action-value function is updated according to the following rule~\cite{krose1995learning}:
 
@@ -98,11 +98,13 @@ The Q-learning based procedure adopted for fixture layout optimization is descri
 		\EndFor
 		
 		\If{$\mathcal{L}_{ep}$ is better than $\mathcal{L}^*$}
+		\label{alg:q_new_ep_start}
 		\State $\mathcal{L}^* \gets \mathcal{L}_{ep}$
 		\EndIf
 		\State $\epsilon \gets \rho\,\epsilon$
 		\State Reset the environment to the initial state $s_1$
 		\State Reset the action space to $\mathcal{A}(s_1)$
+		\label{alg:q_new_ep_end}
 		
 		\EndFor
 		
@@ -154,6 +156,9 @@ After each fixture placement, all candidate centroid positions that no longer sa
 The only constraint that cannot be enforced by restricting the feasible action set is the placement of the minimum number of required fixtures \(\nmin\). For this reason, the feasibility bonus \(b_{\nmin}\) is included in the reward function to encourage the agent to generate layouts satisfying this constraint.
 
 After executing the selected action, the corresponding reward is computed, the \(Q\)-function value associated with state \(s_t\) and action \(a_t\) is evaluated and the learned policy is updated (lines~\ref{alg:q_update_start}--\ref{alg:q_update_end} of Algorithm~\ref{alg:qlearning_fixtures}).
+
+Once an episode has ended, the best policy found so far is updated, and the environment is arranged for the next episode, as reported in lines~\ref{alg:q_new_ep_start}--\ref{alg:q_new_ep_end} of Algorithm~\ref{alg:qlearning_fixtures}.
+
 
 Finally, after all training episodes have been completed, the learned policy is evaluated to obtain the fixture layout for the considered workpiece, as shown in lines~\ref{alg:q_evaluate_start}--\ref{alg:q_evaluate_end} of Algorithm~\ref{alg:qlearning_fixtures}.
 

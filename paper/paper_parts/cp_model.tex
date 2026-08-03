@@ -38,7 +38,7 @@ n_i \leq \nfix_i, \qquad \forall i \in [1..\ntypes].
 
 Since not all available fixtures must necessarily be used, we enforce the following invariant:
 \[
-(i > n) \iff (x_i = \wtab \;\wedge\; y_i = \htab \;\wedge\; t_i = 0).
+(i > n) \iff (x_i = \wtab \;\wedge\; y_i = \htab \;\wedge\; t_i = 0), \qquad \forall i \in [1..\nmax].
 \]
 
 This invariant ensures that all unused fixtures are assigned the dummy type \(0\) and placed at the dummy location \((\wtab,\htab)\), which lies outside the feasible region.

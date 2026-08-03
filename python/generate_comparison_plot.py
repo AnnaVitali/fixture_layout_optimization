@@ -5,7 +5,6 @@ import re
 import matplotlib as mpl
 from matplotlib.lines import Line2D
 
-# Use standard matplotlib colors
 colors_tab10 = plt.cm.tab10(np.linspace(0, 1, 10))
 
 WORKPIECE_LABEL_FONTSIZE = 11
@@ -107,7 +106,6 @@ def main():
     expert_raw = []
     
     for wp_key in workpieces_keys:
-        # Best CP (max of all CP variants: chuffed, cp-sat, gecode, lns)
         cp_providers = [
             p for p in data.get(wp_key, {}).keys()
             if p in ['cp_model_chuffed', 'cp_model_cp-sat', 'cp_model_gecode', 'LNS_cp_model_gecode']
@@ -115,15 +113,12 @@ def main():
         cp_val = get_best_value(data, wp_key, cp_providers)
         cp_raw.append(cp_val)
         
-        # MIP (gurobi only)
         mip_val = data.get(wp_key, {}).get('mip_model_gurobi', None)
         mip_raw.append(mip_val)
         
-        # RL
         rl_val = data.get(wp_key, {}).get('rl', None)
         rl_raw.append(rl_val)
         
-        # PSO variants
         cp_pso_val = data.get(wp_key, {}).get('pso_cp_pso', None)
         cp_pso_raw.append(cp_pso_val)
         
@@ -136,7 +131,6 @@ def main():
         eo_pso_val = data.get(wp_key, {}).get('pso_eo_pso', None)
         eo_pso_raw.append(eo_pso_val)
         
-        # Expert Operator
         expert_val = data.get(wp_key, {}).get('expert_operator', None)
         expert_raw.append(expert_val)
     
@@ -177,14 +171,13 @@ def main():
     width = 0.2
     
     # Define colors for each solver (Wong 8-Color Palette - colorblind friendly)
-    color_cp = '#56B4E9'      # Sky blue
-    color_mip = '#E69F00'     # Orange
-    color_rl = '#D55E00'      # Vermillion
-    color_eo = '#009E73'      # Bluish green
+    color_cp = '#56B4E9'      
+    color_mip = '#E69F00'    
+    color_rl = '#D55E00'     
+    color_eo = '#009E73'     
     
     fig = plt.figure(figsize=(22, 6))
     
-    # Plot 1: Without PSO (CP, MIP, RL)
     plt.subplot(1, 2, 1)
     
     impr_cp_masked = [v if v is not None else np.nan for v in impr_cp]
@@ -253,7 +246,6 @@ def main():
     plt.grid(axis='y', linestyle='--', alpha=0.4)
     plt.ylim(y_min, y_max)
     
-    # Plot 2: PSO Solutions (simple bars, improvement vs EO)
     plt.subplot(1, 2, 2)
     
     impr_cp_pso_masked = [v if v is not None else np.nan for v in impr_cp_pso]

@@ -86,14 +86,11 @@ class QLearningAgent:
         self.epsilon_decay = epsilon_decay
         self.epsilon_min = epsilon_min
         
-        # Q-table: dict of (state, action) -> q_value
         self.q_table: Dict[Tuple, float] = defaultdict(float)
         
-        # Cache: store last computed valid actions to speed up training
         self._last_valid_actions_cache = None
         self._last_env_id = None
         
-        # Statistics
         self.update_count = 0
         
     def get_state(self, env: FixtureLayoutEnv) -> Tuple[int, int, int]:
@@ -132,12 +129,9 @@ class QLearningAgent:
         if not valid_actions:
             return None
         
-        # Epsilon-greedy: explore with probability epsilon, exploit with probability 1-epsilon
         if training and np.random.random() < self.epsilon:
-            # Explore: random action
             return valid_actions[np.random.randint(0, len(valid_actions))]
         else:
-            # Exploit: best Q-value for this state
             best_value = -np.inf
             best_actions = []
             
@@ -149,7 +143,6 @@ class QLearningAgent:
                 elif q_value == best_value:
                     best_actions.append(action)
             
-            # Return random action among best
             return best_actions[np.random.randint(0, len(best_actions))]
     
     def update_q_value(
@@ -177,10 +170,8 @@ class QLearningAgent:
         Returns:
             TD error (for logging)
         """
-        # Current Q-value
         current_q = self.q_table[(state, action)]
         
-        # Maximum Q-value for next state
         if done or not next_valid_actions:
             max_next_q = 0.0
         else:
@@ -188,7 +179,6 @@ class QLearningAgent:
                 self.q_table[(next_state, a)] for a in next_valid_actions
             )
         
-        # Q-learning update
         td_target = reward + self.gamma * max_next_q
         td_error = td_target - current_q
         
@@ -232,14 +222,11 @@ def get_valid_actions(
         List of (valid_position_idx, fixture_type) tuples
         where fixture_type in {1, 2}
     """
-    # Create cache key based on current environment state
     env_key = (len(env.fixtures), env.fixture_availability[1], env.fixture_availability[2])
     
-    # Return cached result if available
     if agent._last_env_id == env_key and agent._last_valid_actions_cache is not None:
         return agent._last_valid_actions_cache
     
-    # Compute valid actions using environment's methods
     valid_pairs, _, _ = env._compute_valid_action_positions()
     valid_objectives = env._compute_valid_action_objectives()
     
@@ -251,7 +238,6 @@ def get_valid_actions(
                 if env.fixture_availability[fixture_type] > 0:
                     valid_actions.append((pos_idx, fixture_type))
     
-    # Cache result
     agent._last_env_id = env_key
     agent._last_valid_actions_cache = valid_actions
     
@@ -292,80 +278,51 @@ def place_fixture_directly(
     if env.fixture_availability[fixture_type] <= 0:
         return -500e6, False
     
-    # Get fixture dimensions and position
     width, height = FIXTURE_DIMENSIONS[fixture_type]
     x_pos = env.x_positions[x_idx]
     y_pos = env.y_positions[y_idx]
     top_left_x = x_pos - width / 2
     top_left_y = y_pos - height / 2
     
-    # Create fixture state
     fixture_state = FixtureState(x=top_left_x, y=top_left_y, angle=0.0, type_id=fixture_type)
     
-    # Check if valid
     is_valid, _ = env._is_valid_placement(x_pos, y_pos, fixture_type, 0.0)
     
     if not is_valid:
         return -500e6, False
     
-    # Add fixture
     old_fixtures = env.fixtures
     env.fixtures.append(fixture_state)
     env.fixture_availability[fixture_type] -= 1
     
-    # Compute new MOI
     old_moment = env.cumulative_moment
     new_moment = env._compute_system_moment_of_inertia(env.fixtures)
     env.cumulative_moment = new_moment
     
-    # Improved reward structure to incentivize more fixtures with better spacing:
-    # - MOI contribution: scaled down (only positive changes count)
-    # - Distribution bonus: exponential growth with fixture count (quadratic)
-    # - Distance bonus: rewards placing fixtures far from existing ones
-    # - Minimum fixtures bonus: strong bonus for reaching min_fixtures threshold
-    
     moi_increase = new_moment - old_moment
     num_fixtures_after = len(env.fixtures)
     
-    # 1. MOI contribution (scaled down to prevent dominating reward)
-    # Only reward improvements, scale by 0.01 to keep MOI secondary
     moi_contribution = max(0, moi_increase) * 0.01
-    
-    # 2. Strong distribution bonus with exponential growth
-    # Encourages placing many fixtures:
-    # 1 fixture: 1.0e9
-    # 2 fixtures: 4.0e9
-    # 3 fixtures: 9.0e9
-    # 4 fixtures: 16.0e9
-    # This strongly incentivizes going from 2→3 fixtures (+5e9 bonus difference)
     distribution_bonus = 1.0e9 * (num_fixtures_after ** 2)
     
-    # 3. Distance bonus: reward placing fixtures far apart from each other
-    # Calculate average distance from new fixture to all previous fixtures
     distance_bonus = 0.0
     if num_fixtures_before > 0:
         total_distance = 0.0
         for i in range(num_fixtures_before):
             prev_fixture = old_fixtures[i]
-            # Calculate center coordinates
             prev_width, prev_height = FIXTURE_DIMENSIONS[prev_fixture.type_id]
             prev_center_x = prev_fixture.x + prev_width / 2
             prev_center_y = prev_fixture.y + prev_height / 2
             
             new_center_x = x_pos
             new_center_y = y_pos
-            
-            # Euclidean distance
+           
             distance = ((new_center_x - prev_center_x)**2 + (new_center_y - prev_center_y)**2) ** 0.5
             total_distance += distance
         
-        # Average distance to existing fixtures, scaled to encourage spacing
-        # Scale factor: 1.0e6 per mm of average distance
         avg_distance = total_distance / num_fixtures_before
         distance_bonus = 1.0e6 * avg_distance
     
-    # 4. Explicit bonus for reaching minimum fixtures (e.g., 3 for simple_stair_step)
-    # This provides a major incentive to break through the 2-fixture local optimum
     min_fixtures_bonus = 5.0e9 if num_fixtures_after >= env.min_fixtures else 0.0
     
     reward = moi_contribution + distribution_bonus + distance_bonus + min_fixtures_bonus
@@ -394,40 +351,30 @@ def train_episode(
     min_fixtures = MINIMUM_FIXTURES.get(workpiece_name, 3)
     
     while not done:
-        # Get valid actions
         valid_actions = get_valid_actions(env, agent)
         
         num_current_fixtures = len(env.fixtures)
         
         if not valid_actions:
-            # No valid actions available, episode ends early
             break
         
-        # Select action - MUST choose one when valid actions available
-        # Agent is forced to place a fixture; cannot skip this step
         action = agent.select_action(state, valid_actions, training=True)
         assert action is not None, "Agent must select an action when valid_actions is non-empty"
         
-        # Convert action to grid position and fixture type
         pos_idx, fixture_type = action
         valid_pairs, _, _ = env._compute_valid_action_positions()
         x_idx, y_idx = valid_pairs[pos_idx]
         
-        # Place fixture directly (bypasses environment's greedy logic)
         num_fixtures_before = len(env.fixtures)
         reward, success = place_fixture_directly(env, x_idx, y_idx, fixture_type, num_fixtures_before)
         
-        # Only allow done if: (max_steps reached AND minimum fixtures met) OR placement failed
         num_current_fixtures = len(env.fixtures)
         done = ((env.step_count >= env.max_steps and num_current_fixtures >= min_fixtures) or not success)
         
-        # Get next state
         next_state = agent.get_state(env)
         
-        # Get valid actions for next state
         next_valid_actions = get_valid_actions(env, agent)
         
-        # Update Q-value
         agent.update_q_value(
             state=state,
             action=action,
@@ -445,14 +392,11 @@ def train_episode(
     num_fixtures = len(env.fixtures)
     final_moi = env.cumulative_moment
     
-    # CRITICAL: Penalize incomplete solutions, bonus valid solutions
     min_fixtures = MINIMUM_FIXTURES.get(workpiece_name, 3)
     if num_fixtures >= min_fixtures:
-        # Valid solution: bonus increases with fixture count
         completion_bonus = 10e9 * (num_fixtures / 3.0)  # Much stronger incentive
         cumulative_reward += completion_bonus
     else:
-        # Invalid solution: strong penalty to discourage incomplete episodes
         completion_penalty = -10e9
         cumulative_reward += completion_penalty
     
@@ -483,7 +427,6 @@ def evaluate_episode(
     min_fixtures = MINIMUM_FIXTURES.get(workpiece_name, 3)
     
     while not done:
-        # Get valid actions
         valid_actions = get_valid_actions(env, agent)
         
         num_current_fixtures = len(env.fixtures)
@@ -491,16 +434,12 @@ def evaluate_episode(
         if not valid_actions:
             break
         
-        # If we haven't met minimum fixtures yet, we must continue placing
         if num_current_fixtures < min_fixtures:
-            # Force continued placement by not allowing done
             pass
         
-        # Select action with epsilon=0.3 exploration (stronger to escape local optima)
         if np.random.random() < 0.3:  # 30% exploration
             action = valid_actions[np.random.randint(len(valid_actions))]
         else:
-            # Greedy selection
             best_action = None
             best_q_value = -np.inf
             for a in valid_actions:
@@ -510,15 +449,12 @@ def evaluate_episode(
                     best_action = a
             action = best_action if best_action is not None else valid_actions[0]
         
-        # Agent must select an action when valid_actions is non-empty
         assert action is not None, "Agent must select an action when valid_actions is non-empty"
         
-        # Convert action to grid position and fixture type
         pos_idx, fixture_type = action
         valid_pairs, _, _ = env._compute_valid_action_positions()
         x_idx, y_idx = valid_pairs[pos_idx]
         
-        # Place fixture directly
         num_fixtures_before = len(env.fixtures)
         reward, success = place_fixture_directly(env, x_idx, y_idx, fixture_type, num_fixtures_before)
         
@@ -529,7 +465,6 @@ def evaluate_episode(
         state = agent.get_state(env)
         num_current_fixtures = len(env.fixtures)
         
-        # Only allow done if: (max_steps reached AND minimum fixtures met)
         done = (env.step_count >= env.max_steps and num_current_fixtures >= min_fixtures)
         
         if render:
@@ -538,7 +473,6 @@ def evaluate_episode(
     num_fixtures = len(env.fixtures)
     final_moi = env.cumulative_moment
     
-    # Capture fixture configuration for saving
     fixtures_config = [
         {
             'type': f.type_id,
@@ -549,14 +483,11 @@ def evaluate_episode(
         for f in env.fixtures
     ]
     
-    # CRITICAL: Penalize incomplete solutions, bonus valid solutions
     min_fixtures = MINIMUM_FIXTURES.get(workpiece_name, 3)
     if num_fixtures >= min_fixtures:
-        # Valid solution: bonus increases with fixture count
         completion_bonus = 10e9 * (num_fixtures / 3.0)  # Much stronger incentive
         cumulative_reward += completion_bonus
     else:
-        # Invalid solution: strong penalty to discourage incomplete episodes
         completion_penalty = -10e9
         cumulative_reward += completion_penalty
     
@@ -583,7 +514,6 @@ def main():
     
     args = parser.parse_args()
     
-    # Create environment
     print(f"[Main] Creating environment for '{args.workpiece}'...")
     env = FixtureLayoutEnv(
         workpiece_name=args.workpiece,
@@ -592,10 +522,9 @@ def main():
         use_hybrid_action_space=False,
         use_continuous_action_space=False,
         grid_resolution=10.0,
-        max_steps=30  # Increased to allow placement of minimum fixtures
+        max_steps=30  
     )
     
-    # Create agent
     print(f"[Main] Creating Q-Learning agent...")
     agent = QLearningAgent(
         learning_rate=args.learning_rate,
@@ -603,17 +532,14 @@ def main():
         epsilon_decay=args.epsilon_decay,
     )
     
-    # Output directory structure
     output_dir = Path(__file__).parent / OUTPUT_RESULTS_DIR
     models_dir = output_dir / OUTPUT_MODELS_SUBDIR
     json_dir = output_dir / OUTPUT_JSON_SUBDIR
     
-    # Create directories
     output_dir.mkdir(exist_ok=True)
     models_dir.mkdir(exist_ok=True)
     json_dir.mkdir(exist_ok=True)
     
-    # Training loop
     print(f"\n[Main] Starting training for {args.episodes} episodes...")
     print(f"[Main] Epsilon decay: {args.epsilon_decay}")
     print(f"[Main] Evaluation frequency: {args.eval_freq} episodes\n")
@@ -621,31 +547,27 @@ def main():
     best_moi = float('-inf')
     best_fixtures = 0
     best_episode = 0
-    best_model_file = None  # Track best model file for current run
+    best_model_file = None  
     
     episode_rewards = []
     episode_fixtures = []
     episode_mois = []
     
     for episode in range(1, args.episodes + 1):
-        # Training episode
         train_reward, train_fixtures, train_moi = train_episode(agent, env, args.workpiece)
         
         episode_rewards.append(train_reward)
         episode_fixtures.append(train_fixtures)
         episode_mois.append(train_moi)
         
-        # Check training results against best_moi and save if improved
         if train_moi > best_moi:
             best_moi = train_moi
             best_fixtures = train_fixtures
             best_episode = episode
             
-            # Save best model
             best_model_file = models_dir / "best_model.pkl"
             agent.save(str(best_model_file))
             
-            # Save best solution from training
             best_solution = fixtures_to_solution_json(env.fixtures, train_moi, env.visualizer)
             best_solution_file = json_dir / f"rl_{args.workpiece}.json"
             with open(best_solution_file, 'w') as f:
@@ -656,7 +578,6 @@ def main():
             print(f"[Agent] {status} Best solution saved (TRAIN): {train_fixtures} fixtures, MOI={train_moi:.2e}")
             print(f"[Agent] Files: {best_model_file} | {best_solution_file}")
         
-        # Periodic evaluation
         if episode % args.eval_freq == 0:
             eval_reward, eval_fixtures, eval_moi, eval_fixture_config = evaluate_episode(agent, env, args.workpiece, seed=42)
             
@@ -666,17 +587,14 @@ def main():
                   f"fixtures={eval_fixtures:2d}, MOI={eval_moi:10.2e} | "
                   f"eps={agent.epsilon:.4f}")
             
-            # Also check evaluation results against best_moi
             if eval_moi > best_moi:
                 best_moi = eval_moi
                 best_fixtures = eval_fixtures
                 best_episode = episode
                 
-                # Save best model
                 best_model_file = models_dir / "best_model.pkl"
                 agent.save(str(best_model_file))
                 
-                # Save best solution from evaluation
                 best_solution = fixtures_to_solution_json(env.fixtures, eval_moi, env.visualizer)
                 best_solution_file = json_dir / f"rl_{args.workpiece}.json"
                 with open(best_solution_file, 'w') as f:
@@ -692,7 +610,6 @@ def main():
                       f"fixtures={train_fixtures:2d}, MOI={train_moi:10.2e} | "
                       f"eps={agent.epsilon:.4f}")
     
-    # Final save
     agent.save(str(models_dir / "final_model.pkl"))
     
     print(f"\n[Main] Training complete!")
@@ -701,18 +618,15 @@ def main():
     print(f"[Main] Solutions saved to {json_dir}")
     print(f"[Main] Q-table size: {len(agent.q_table)} state-action pairs")
     
-    # Visualize best solution
     print(f"\n[Main] Visualizing best solution...")
     best_solution_path = json_dir / f"rl_{args.workpiece}.json"
     
     if best_solution_path.exists():
-        # Load the best solution
         with open(best_solution_path, 'r') as f:
             best_solution = json.load(f)
         
         print(f"[Visualization] Loading best solution (Objective={best_solution['objective_value']:.2e})...")
         
-        # Create environment for visualization
         env_viz = FixtureLayoutEnv(
             workpiece_name=args.workpiece,
             render_mode="human",
@@ -725,8 +639,6 @@ def main():
         
         obs, info = env_viz.reset(seed=42)
         
-        # Reconstruct fixtures from saved solution
-        # Note: Coordinates in JSON are in original space, need to convert to mathematical space
         num_fixtures = len(best_solution['x'])
         print(f"[Visualization] Placing {num_fixtures} fixtures...")
         
@@ -734,18 +646,13 @@ def main():
         
         for i in range(num_fixtures):
             fixture_type = best_solution['fixture_type'][i]
-            # Coordinates in JSON are in original space (from rl_agent)
             center_x_orig = best_solution['fixtures_center_x'][i]
             center_y_orig = best_solution['fixtures_center_y'][i]
             angle = best_solution['angle'][i]
             
-            # Transform from original space to mathematical space
-            # Original space: y increases downward
-            # Mathematical space: y increases upward, 0,0 at lower-left
             center_x_math = center_x_orig - env_viz.visualizer.min_x
             center_y_math = workpiece_height - (center_y_orig - env_viz.visualizer.min_y)
             
-            # Create fixture state (convert center to top-left corner)
             from machine_parameters import FIXTURE_DIMENSIONS
             width, height = FIXTURE_DIMENSIONS[fixture_type]
             top_left_x = center_x_math - width / 2
@@ -758,31 +665,23 @@ def main():
                 type_id=fixture_type
             )
             
-            # Add to environment
             env_viz.fixtures.append(fixture_state)
             env_viz.fixture_availability[fixture_type] -= 1
             
             print(f"  [{i+1}] Type {fixture_type} at center ({center_x_orig:.1f}, {center_y_orig:.1f})")
         
-        # Compute MOI
         computed_moi = env_viz._compute_system_moment_of_inertia(env_viz.fixtures)
         env_viz.cumulative_moment = computed_moi
         
         print(f"[Visualization] Final solution: {num_fixtures} fixtures, MOI={computed_moi:.2e}")
         
-        # Disable valid action points visualization for final display
-        # Both conditions must be false for _render_human() to skip valid action points:
-        # 1. Set fixture availability to 0 (stops the condition: fixture_availability[i] > 0)
-        # 2. Set max_fixtures to current count (stops the condition: len(fixtures) < max_fixtures)
         env_viz.fixture_availability[1] = 0
         env_viz.fixture_availability[2] = 0
-        env_viz.max_fixtures = len(env_viz.fixtures)  # Makes len(fixtures) < max_fixtures False
+        env_viz.max_fixtures = len(env_viz.fixtures)
         
-        # Render the environment (shows only workpiece, holes, and placed fixtures - clean visualization)
         print("[Visualization] Displaying best solution (close the window to continue)...")
         env_viz.render()
         
-        # Block until the visualization window is closed
         try:
             import matplotlib.pyplot as plt
             plt.show()

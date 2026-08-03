@@ -21,7 +21,7 @@ where:
 
 In the proposed approach, PSO further improves the provided initial layouts by explicitly considering fixture rotation. The objective is to maximize the sum of the principal moments of inertia, i.e., the objective function \(\finer = J_\xi + J_\eta\) defined in Section~\ref{sec:backgorund}.
 
-In our formulation, the position of each particle \(s \in [1,\swarmsize]\) is represented by a matrix \(P_s\) with four rows and \(\nmax\) columns, where \(\nmax\) denotes the maximum number of available fixtures. Each column of \(P_s\) represents a fixture, while each row corresponds to one of the decision variables:
+In our formulation, the position of each particle \(s \in [1,\swarmsize]\) is represented by a matrix \(P_s\) with four rows and \(\nmax\) columns. Each column of \(P_s\) represents a fixture, while each row corresponds to one of the decision variables:
 \begin{itemize}
 	\item $P_s[1,j]$: the $x$-coordinate of the lower-left corner of the $j$-th fixture;
 	\item $P_s[2,j]$: the $y$-coordinate of the lower-left corner of the $j$-th fixture;

@@ -28,7 +28,6 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import numpy as np
 
-# Visualization imports
 try:
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
@@ -39,7 +38,6 @@ except ImportError as exc:
         "matplotlib is required. Install it with: pip install matplotlib"
     ) from exc
 
-# Data models
 try:
     from python.machine_parameters import FIXTURE_AVAILABILITY, HORIZONTAL_SECUIRITY_DISTANCE, VERTICAL_SECUIRITY_DISTANCE, FixtureState, FIXTURE_DIMENSIONS
 except ImportError:
@@ -48,7 +46,6 @@ except ImportError:
     except ImportError:
         from machine_parameters import FIXTURE_AVAILABILITY, HORIZONTAL_SECUIRITY_DISTANCE, VERTICAL_SECUIRITY_DISTANCE, FixtureState, FIXTURE_DIMENSIONS
 
-# Utility functions
 try:
     from python.utility import define_fixture_from_state
     from python.moments_of_inertia import InertiaAnalysis
@@ -85,8 +82,6 @@ def get_horizontal_spacing(fixture_type: int) -> float:
     Returns:
         Distance between centers: 145 + 200 = 345 mm (constant for all types)
     """
-    # Use maximum fixture width (145 from Type 1) + security distance
-    # This matches MiniZinc: WBar (145) + WMin (200) = 345
     return 145 + HORIZONTAL_SECUIRITY_DISTANCE
     
 
@@ -108,7 +103,7 @@ def get_max_vertical_spacing() -> float:
     """Get maximum vertical spacing across all fixture types."""
     return max(get_vertical_spacing(ftype) for ftype in FIXTURE_DIMENSIONS.keys())
 
-CENTER_ALIGNMENT_TOLERANCE = 1.0  # mm tolerance for same-column detection
+CENTER_ALIGNMENT_TOLERANCE = 1.0
 
 WORKPIECE_CONSTRAINTS = {
     'coffee_table': {'min_fixtures': 6, 'max_fixtures': 10},
@@ -135,14 +130,12 @@ class WorkpieceVisualizer:
         self.workpiece_data = workpiece_data
         self.figure_size = figure_size
         
-        # Calculate bounds
         vertices = np.array(workpiece_data['vertices'])
         self.min_x = vertices[:, 0].min()
         self.max_x = vertices[:, 0].max()
         self.min_y = vertices[:, 1].min()
         self.max_y = vertices[:, 1].max()
         
-        # Add padding
         self.padding = 50
         
     def get_figure(self, fixtures: List[Dict] = None, title: str = "Fixture Layout") -> Figure:
@@ -158,7 +151,6 @@ class WorkpieceVisualizer:
         """
         fig, ax = plt.subplots(figsize=self.figure_size)
         
-        # Draw workpiece boundary
         vertices = self.workpiece_data['vertices']
         workpiece_poly = patches.Polygon(
             vertices,
@@ -170,10 +162,9 @@ class WorkpieceVisualizer:
         )
         ax.add_patch(workpiece_poly)
         
-        # Draw holes (excluded regions)
         if 'holes' in self.workpiece_data:
             for hole in self.workpiece_data['holes']:
-                if len(hole) == 3:  # Circle: [cx, cy, radius]
+                if len(hole) == 3:
                     circle = patches.Circle(
                         (hole[0], hole[1]),
                         hole[2],
@@ -185,16 +176,14 @@ class WorkpieceVisualizer:
                     )
                     ax.add_patch(circle)
         
-        # Draw fixtures if provided
         if fixtures:
             for idx, fixture in enumerate(fixtures):
                 self._draw_fixture(ax, fixture, idx)
         
-        # Set axis properties
         ax.set_xlim(self.min_x - self.padding, self.max_x + self.padding)
         ax.set_ylim(self.min_y - self.padding, self.max_y + self.padding)
         ax.set_aspect('equal')
-        ax.invert_yaxis()  # Standard computer graphics coordinate system
+        ax.invert_yaxis() 
         ax.set_title(title, fontsize=14, fontweight='bold')
         ax.set_xlabel('X (mm)')
         ax.set_ylabel('Y (mm)')
@@ -208,11 +197,9 @@ class WorkpieceVisualizer:
         if not state:
             return
         
-        # Get fixture dimensions
         t = state.type_id
         width, height = FIXTURE_DIMENSIONS.get(t, (0, 0))
         
-        # Calculate corners
         corners = [
             (state.x, state.y),
             (state.x + width, state.y),
@@ -220,7 +207,6 @@ class WorkpieceVisualizer:
             (state.x, state.y + height),
         ]
         
-        # Rotate corners around center
         center_x = state.x + width / 2
         center_y = state.y + height / 2
         angle_rad = math.radians(state.angle)
@@ -233,7 +219,6 @@ class WorkpieceVisualizer:
             ry = dx * math.sin(angle_rad) + dy * math.cos(angle_rad) + center_y
             rotated_corners.append((rx, ry))
         
-        # Draw fixture
         colors = ['blue', 'green', 'orange', 'purple', 'brown']
         color = colors[fixture_id % len(colors)]
         
@@ -247,10 +232,8 @@ class WorkpieceVisualizer:
         )
         ax.add_patch(fixture_poly)
         
-        # Draw center point
         ax.plot(center_x, center_y, 'k+', markersize=8, markeredgewidth=2)
         
-        # Add fixture ID label
         ax.text(center_x, center_y, str(fixture_id), 
                 fontsize=8, ha='center', va='center', color='white', fontweight='bold')
 
@@ -300,10 +283,8 @@ class FixtureLayoutEnv(gym.Env):
         self.use_continuous_action_space = use_continuous_action_space
         self.use_hybrid_action_space = use_hybrid_action_space
         
-        # Hybrid mode: fine-tuning offset range in mm around discrete grid positions
-        self.hybrid_offset_range = 1.0  # ±5mm fine-tuning
+        self.hybrid_offset_range = 1.0 
         
-        # Get workpiece constraints
         if workpiece_name not in WORKPIECE_CONSTRAINTS:
             raise ValueError(f"Workpiece '{workpiece_name}' not found in WORKPIECE_CONSTRAINTS")
         
@@ -311,7 +292,6 @@ class FixtureLayoutEnv(gym.Env):
         self.min_fixtures = self.constraints['min_fixtures']
         self.max_fixtures = self.constraints['max_fixtures']
         
-        # Load workpiece data
         workpiece_file = ROOT / "python" / "resources" / "workpieces_information.json"
         with open(workpiece_file, 'r') as f:
             all_workpieces = json.load(f)
@@ -322,18 +302,14 @@ class FixtureLayoutEnv(gym.Env):
         self.workpiece_data = all_workpieces[workpiece_name]
         self.visualizer = WorkpieceVisualizer(self.workpiece_data)
         
-        # Transform workpiece vertices to mathematical coordinate system (0,0 at lower-left, y increases upward)
         workpiece_height = self.visualizer.max_y - self.visualizer.min_y
         workpiece_width = self.visualizer.max_x - self.visualizer.min_x
         
-        # OPTIMIZATION: Adaptive grid resolution based on workpiece size
-        # Large workpieces (coffee_table ~1500mm²) use coarser grid to reduce computation
-        # Smaller workpieces use finer grid for precision
         workpiece_area = workpiece_width * workpiece_height
-        if workpiece_area > 1000000 and self.grid_resolution < 20:  # Large workpiece, fine grid requested
+        if workpiece_area > 1000000 and self.grid_resolution < 20: 
             print(f"[Optimization] Large workpiece detected ({workpiece_area:.0f}mm²). "
                   f"Adjusting grid resolution from {self.grid_resolution}mm to 20.0mm for faster computation.")
-            self.grid_resolution = 20.0  # Use coarser grid for large workpieces
+            self.grid_resolution = 20.0 
         
         transformed_vertices = []
         for vx, vy in self.workpiece_data['vertices']:
@@ -341,30 +317,24 @@ class FixtureLayoutEnv(gym.Env):
             y_transformed = workpiece_height - (vy - self.visualizer.min_y)
             transformed_vertices.append((x_transformed, y_transformed))
         
-        # Create workpiece polygon for collision detection (in transformed space)
         self.workpiece_polygon = Polygon(transformed_vertices)
         
-        # Create exclusion zones from holes in transformed space (must be before _generate_valid_points)
         self.exclusion_zones = []
         if 'holes' in self.workpiece_data:
             for hole in self.workpiece_data['holes']:
-                if len(hole) == 3:  # Circle
+                if len(hole) == 3: 
                     x_hole_transformed = hole[0] - self.visualizer.min_x
                     y_hole_transformed = workpiece_height - (hole[1] - self.visualizer.min_y)
                     zone = ShapelyPoint(x_hole_transformed, y_hole_transformed).buffer(hole[2])
                     self.exclusion_zones.append(zone)
         
-        # Generate valid placement points inside the workpiece
         self.valid_points = self._generate_valid_points()
         self.num_placement_points = len(self.valid_points)
         
         if self.num_placement_points == 0:
             raise ValueError(f"No valid placement points found for {workpiece_name}")
         
-        # Action space: [fixture_type, x_discrete, y_discrete]
-        # Fixtures are placed without rotation (angle = 0)
         
-        # Create x and y discrete ranges in mathematical coordinate system (0,0 at lower-left)
         workpiece_width = self.visualizer.max_x - self.visualizer.min_x
         self.x_positions = np.arange(
             0,
@@ -377,46 +347,30 @@ class FixtureLayoutEnv(gym.Env):
             self.grid_resolution
         )
         
-        # Store workpiece dimensions for continuous action space
         self.workpiece_width = workpiece_width
         self.workpiece_height = workpiece_height
         
-        # Preprocess grid positions: identify which positions can accommodate at least one fixture type
-        # This is done once during init to filter out perimeter positions that can't fit any fixture
         self.safe_grid_positions = self._preprocess_valid_grid_positions()
         
-        # Action space: depends on mode
         if self.use_hybrid_action_space:
-            # Hybrid: discrete grid + continuous fine-tuning
-            # Action: [fixture_type_norm, grid_position_norm, offset_x, offset_y]
-            # - fixture_type_norm ∈ [0, 1]: scale to 0-2, round to int
-            # - grid_position_norm ∈ [0, 1]: scale to valid grid indices
-            # - offset_x ∈ [-1, 1]: fine-tuning in mm (scaled by hybrid_offset_range)
-            # - offset_y ∈ [-1, 1]: fine-tuning in mm (scaled by hybrid_offset_range)
             self.action_space = spaces.Box(
                 low=np.array([0.0, 0.0, -1.0, -1.0], dtype=np.float32),
                 high=np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32),
                 dtype=np.float32
             )
         elif self.use_continuous_action_space:
-            # Pure continuous: [fixture_type, x_normalized, y_normalized]
             self.action_space = spaces.Box(
                 low=np.array([0.0, 0.0, 0.0], dtype=np.float32),
                 high=np.array([2.0, 1.0, 1.0], dtype=np.float32),
                 dtype=np.float32
             )
         else:
-            # Discrete grid: [fixture_type, valid_pair_idx]
             max_possible_pairs = len(self.x_positions) * len(self.y_positions)
             self.action_space = spaces.MultiDiscrete([
-                3,  # fixture type: 0=none, 1=square, 2=rectangular
-                max_possible_pairs,  # index into valid_pairs list
+                3,  
+                max_possible_pairs,  
             ])
         
-        # Observation space: 
-        # - Fixture availability for type 1 and type 2 (2 values, normalized)
-        # - Current placed fixtures info (max_fixtures * 5: x_norm, y_norm, angle_norm, type_norm, is_active)
-        # - Sum of moments of inertia (1 value, normalized)
         obs_size = 2 + (self.max_fixtures * 5) + 1
         self.observation_space = spaces.Box(
             low=0.0,
@@ -425,21 +379,17 @@ class FixtureLayoutEnv(gym.Env):
             dtype=np.float32
         )
         
-        # Initialize state
         self.fixtures: List[FixtureState] = []
         self.fixture_availability = {
-            1: FIXTURE_AVAILABILITY[1],  # Square fixtures
-            2: FIXTURE_AVAILABILITY[2],  # Rectangular fixtures
+            1: FIXTURE_AVAILABILITY[1],  
+            2: FIXTURE_AVAILABILITY[2],  
         }
         self.step_count = 0
-        self.max_steps = max_steps  # Configurable max steps per episode
+        self.max_steps = max_steps  
         self.cumulative_moment = 0.0
         
-        # PERFORMANCE: Cache fixture bounds and centers to avoid recomputation
-        # Each fixture cached as {center: (cx, cy), bounds: (minx, maxx, miny, maxy)}
-        self.fixture_cache = {}  # Maps fixture index to {center, bounds, type_id}
+        self.fixture_cache = {}  
         
-        # Visualization
         self.fig = None
         self.ax = None
         self.is_displaying = False
@@ -453,7 +403,7 @@ class FixtureLayoutEnv(gym.Env):
             1: FIXTURE_AVAILABILITY[1],
             2: FIXTURE_AVAILABILITY[2],
         }
-        self.fixture_cache = {}  # PERFORMANCE: Clear cache on reset
+        self.fixture_cache = {}  
         self.step_count = 0
         self.cumulative_moment = 0.0
         
@@ -482,15 +432,12 @@ class FixtureLayoutEnv(gym.Env):
         
         safe_positions = set()
         
-        # Precompute fixture dimensions to avoid repeated lookups
         fixture_dims = {1: FIXTURE_DIMENSIONS[1], 2: FIXTURE_DIMENSIONS[2]}
         max_width = max(w for w, h in fixture_dims.values())
         max_height = max(h for w, h in fixture_dims.values())
         
-        # Get workpiece bounds
         minx, miny, maxx, maxy = self.workpiece_polygon.bounds
         
-        # DEBUG: Print bounds and grid info for problematic workpieces
         if self.workpiece_polygon.bounds[0] == self.workpiece_polygon.bounds[2]:  # Degenerate polygon
             print(f"[DEBUG] WARNING: Degenerate workpiece polygon bounds: {self.workpiece_polygon.bounds}")
             print(f"[DEBUG] Workpiece vertices count: {len(list(self.workpiece_polygon.exterior.coords))}")
@@ -501,33 +448,25 @@ class FixtureLayoutEnv(gym.Env):
         print(f"[DEBUG] Fixture dimensions: Type1={fixture_dims[1]}, Type2={fixture_dims[2]}")
         print(f"[DEBUG] Exclusion zones count: {len(self.exclusion_zones)}")
         
-        # Check each grid position with early exit optimizations
         rejected_by_bounds = 0
         rejected_by_holes = 0
         accepted = 0
         
-        # For the initial bounds check, use MINIMUM fixture dimensions
-        # (position is only too close to edge if even the smallest fixture won't fit)
-        min_width = min(fixture_dims[1][0], fixture_dims[2][0])  # min(145, 180) = 145
-        min_height = min(fixture_dims[1][1], fixture_dims[2][1])  # min(145, 65) = 65
+        min_width = min(fixture_dims[1][0], fixture_dims[2][0]) 
+        min_height = min(fixture_dims[1][1], fixture_dims[2][1])  
         half_min_width = min_width / 2
         half_min_height = min_height / 2
         
         for x_idx, x_pos in enumerate(self.x_positions):
             for y_idx, y_pos in enumerate(self.y_positions):
-                # FAST CHECK: Bounding box filter first using MINIMUM dimensions
-                # Position is only rejected if even the smallest fixture can't fit
                 if (x_pos - half_min_width < minx or x_pos + half_min_width > maxx or
                     y_pos - half_min_height < miny or y_pos + half_min_height > maxy):
-                    # Grid position itself is too close to edge
                     rejected_by_bounds += 1
                     continue
                 
-                # Check if at least one fixture type can fit at this position
                 can_fit = False
                 position_reason = ""
                 
-                # Try Type 1 (larger/square) first as it's more constrained
                 for fixture_type in [1, 2]:
                     width, height = fixture_dims[fixture_type]
                     top_left_x = x_pos - width / 2
@@ -535,23 +474,19 @@ class FixtureLayoutEnv(gym.Env):
                     bottom_right_x = top_left_x + width
                     bottom_right_y = top_left_y + height
                     
-                    # Bounds check: fixture must fit entirely within workpiece bounds
                     if (top_left_x < minx or bottom_right_x > maxx or
                         top_left_y < miny or bottom_right_y > maxy):
                         position_reason = f"fixture_type={fixture_type}_bounds_fail"
                         continue
                     
-                    # Create fixture box for geometric checks
                     fixture_box = box(top_left_x, top_left_y, bottom_right_x, bottom_right_y)
                     
-                    # Check if fixture is fully within workpiece boundary (important for non-rectangular shapes)
                     if not fixture_box.within(self.workpiece_polygon):
                         position_reason = f"fixture_type={fixture_type}_outside_polygon"
                         continue
                     
-                    # Check no overlap with exclusion zones (holes)
                     overlaps_hole = False
-                    if self.exclusion_zones:  # Only check if zones exist
+                    if self.exclusion_zones: 
                         for zone in self.exclusion_zones:
                             if fixture_box.intersects(zone):
                                 overlaps_hole = True
@@ -559,7 +494,7 @@ class FixtureLayoutEnv(gym.Env):
                     
                     if not overlaps_hole:
                         can_fit = True
-                        break  # At least one fixture type fits, so include this position
+                        break  
                     else:
                         position_reason = f"fixture_type={fixture_type}_hole_overlap"
                 
@@ -568,11 +503,9 @@ class FixtureLayoutEnv(gym.Env):
                     accepted += 1
                 else:
                     rejected_by_holes += 1
-                    # DEBUG: Print first few positions that CANNOT fit
                     if rejected_by_holes <= 5:
                         print(f"[DEBUG]   Position ({x_idx},{y_idx})=({x_pos},{y_pos}) REJECTED: {position_reason}")
         
-        # Debug output
         total_positions = len(self.x_positions) * len(self.y_positions)
         safe_count = len(safe_positions)
         elapsed = time.time() - start_time
@@ -604,33 +537,25 @@ class FixtureLayoutEnv(gym.Env):
         """
         valid_pairs = []
         
-        # PERFORMANCE: For large workpieces, build a spatial index of existing fixtures
-        # to avoid checking all fixtures for every grid position
-        max_spacing_dist = 400.0  # Horizontal spacing is 345mm, so ~400mm is max check distance
+        max_spacing_dist = 400.0  
         
-        # Check each safe grid position
         for x_idx, y_idx in self.safe_grid_positions:
             x_pos = self.x_positions[x_idx]
             y_pos = self.y_positions[y_idx]
             
-            # Check if this position is valid for AT LEAST ONE fixture type
             is_valid_for_any = False
             
-            # Try both fixture types at this position (prefer type 1, then type 2)
             for new_fixture_type in [1, 2]:
                 violates_spacing = False
                 
-                # PERFORMANCE: Use cached fixture bounds - only check fixtures in nearby region
                 for fixture_idx, cache in self.fixture_cache.items():
-                    # Quick bounding box check before distance computation (O(1) vs O(distance calc))
-                    bounds = cache['bounds']  # (minx, maxx, miny, maxy)
+                    bounds = cache['bounds'] 
                     if (x_pos < bounds[0] - max_spacing_dist or 
                         x_pos > bounds[1] + max_spacing_dist or
                         y_pos < bounds[2] - max_spacing_dist or 
                         y_pos > bounds[3] + max_spacing_dist):
-                        continue  # This position is too far from this fixture
+                        continue  
                     
-                    # Now do the full spacing check only for nearby fixtures
                     fx_center, fy_center = cache['center']
                     dx = abs(x_pos - fx_center)
                     dy = abs(y_pos - fy_center)
@@ -647,13 +572,11 @@ class FixtureLayoutEnv(gym.Env):
             if is_valid_for_any:
                 valid_pairs.append((x_idx, y_idx))
         
-        # Debug output on first step
         if self.verbose and (self.step_count == 0 or len(self.fixtures) == 0):
             safe_count = len(self.safe_grid_positions)
             valid_count = len(valid_pairs)
             print(f"[Step {self.step_count}] Valid action positions: {valid_count}/{safe_count} grid positions")
         
-        # Extract unique x and y indices from valid pairs
         valid_x_set = set(x_idx for x_idx, _ in valid_pairs)
         valid_y_set = set(y_idx for _, y_idx in valid_pairs)
         
@@ -676,7 +599,6 @@ class FixtureLayoutEnv(gym.Env):
         if not valid_objectives:
             return None
         
-        # FIRST PLACEMENT: Prioritize distance from center
         if len(self.fixtures) == 0:
             workpiece_center_x = self.workpiece_width / 2
             workpiece_center_y = self.workpiece_height / 2
@@ -687,10 +609,8 @@ class FixtureLayoutEnv(gym.Env):
                 x_pos = self.x_positions[x_idx]
                 y_pos = self.y_positions[y_idx]
                 
-                # Distance from workpiece center
                 distance = math.sqrt((x_pos - workpiece_center_x)**2 + (y_pos - workpiece_center_y)**2)
                 
-                # Simulate placement to count remaining positions
                 width, height = FIXTURE_DIMENSIONS[fixture_type]
                 top_left_x = x_pos - width / 2
                 top_left_y = y_pos - height / 2
@@ -705,8 +625,6 @@ class FixtureLayoutEnv(gym.Env):
                 
                 remaining_positions = len(valid_pairs_after)
                 
-                # Score: prioritize distance (80%), then flexibility (20%)
-                # Normalize distance to [0,1] (max distance is diagonal of workpiece)
                 max_distance = math.sqrt(self.workpiece_width**2 + self.workpiece_height**2) / 2
                 distance_ratio = distance / max_distance if max_distance > 0 else 0.5
                 
@@ -721,21 +639,16 @@ class FixtureLayoutEnv(gym.Env):
                     'score': score
                 })
             
-            # Find maximum score
             max_score = max(a['score'] for a in scored_actions)
             
-            # Get all actions within 1% of max score
             best_actions = [a for a in scored_actions if a['score'] >= max_score * 0.99]
             
-            # Randomly select among best actions
             random_idx = self.np_random.integers(0, len(best_actions))
             return best_actions[random_idx]['action']
         
-        # SUBSEQUENT PLACEMENTS: Score 80% MOI + 20% flexibility
         else:
             max_moi = max(valid_objectives.values())
             
-            # Group actions by position
             positions_with_types = {}
             for x_idx, y_idx, fixture_type in valid_objectives.keys():
                 key = (x_idx, y_idx)
@@ -743,14 +656,12 @@ class FixtureLayoutEnv(gym.Env):
                     positions_with_types[key] = []
                 positions_with_types[key].append(fixture_type)
             
-            # Score each position-fixture_type combination
             scored_actions = []
             
             for (x_idx, y_idx), available_types in positions_with_types.items():
                 for fixture_type in available_types:
                     moi = valid_objectives[(x_idx, y_idx, fixture_type)]
                     
-                    # Simulate this placement to see flexibility impact
                     width, height = FIXTURE_DIMENSIONS[fixture_type]
                     x_pos = self.x_positions[x_idx]
                     y_pos = self.y_positions[y_idx]
@@ -760,7 +671,6 @@ class FixtureLayoutEnv(gym.Env):
                     temp_state = FixtureState(x=top_left_x, y=top_left_y, angle=0.0, type_id=fixture_type)
                     temp_fixtures = self.fixtures + [temp_state]
                     
-                    # Count valid positions after this placement
                     original_fixtures = self.fixtures
                     self.fixtures = temp_fixtures
                     valid_pairs_after, _, _ = self._compute_valid_action_positions()
@@ -768,12 +678,8 @@ class FixtureLayoutEnv(gym.Env):
                     
                     remaining_positions = len(valid_pairs_after)
                     
-                    # Score: prioritize (1) MOI, (2) flexibility
-                    # MOI_ratio: normalize to [0,1] range relative to max
                     moi_ratio = moi / max_moi if max_moi > 0 else 0.5
                     
-                    # Combined score: 80% MOI, 20% flexibility (remaining positions)
-                    # This ensures MOI is primary driver but fixture type is considered
                     score = (0.8 * moi_ratio) + (0.2 * min(1.0, remaining_positions / 50))
                     
                     scored_actions.append({
@@ -787,13 +693,10 @@ class FixtureLayoutEnv(gym.Env):
             if not scored_actions:
                 return None
             
-            # Find the maximum score
             max_score = max(a['score'] for a in scored_actions)
             
-            # Get all actions within 1% of max score
             best_actions = [a for a in scored_actions if a['score'] >= max_score * 0.99]
             
-            # Randomly select among best actions
             random_idx = self.np_random.integers(0, len(best_actions))
             return best_actions[random_idx]['action']
     
@@ -814,18 +717,14 @@ class FixtureLayoutEnv(gym.Env):
             x_pos = self.x_positions[x_idx]
             y_pos = self.y_positions[y_idx]
             
-            # Try both fixture types at this position
             for fixture_type in [1, 2]:
-                # Check if placement would be valid
                 is_valid, _ = self._is_valid_placement(x_pos, y_pos, fixture_type, 0.0)
                 
                 if is_valid and self.fixture_availability[fixture_type] > 0:
-                    # Compute MOI if we place this fixture
                     width, height = FIXTURE_DIMENSIONS[fixture_type]
                     top_left_x = x_pos - width / 2
                     top_left_y = y_pos - height / 2
                     
-                    # Temporarily add fixture and compute MOI
                     temp_state = FixtureState(x=top_left_x, y=top_left_y, angle=0.0, type_id=fixture_type)
                     temp_fixtures = self.fixtures + [temp_state]
                     moi_value = self._compute_system_moment_of_inertia(temp_fixtures)
@@ -861,79 +760,63 @@ class FixtureLayoutEnv(gym.Env):
             'sum_moments': self.cumulative_moment,
         }
         
-        # Parse action based on action space mode
         center_x = None
         center_y = None
         fixture_type = None
         
         if self.use_hybrid_action_space:
-            # Hybrid: [fixture_type_norm, grid_position_norm, offset_x, offset_y]
             fixture_type_norm = float(action[0])
             grid_position_norm = float(action[1])
-            offset_x = float(action[2])  # ∈ [-1, 1]
-            offset_y = float(action[3])  # ∈ [-1, 1]
+            offset_x = float(action[2])  
+            offset_y = float(action[3]) 
             
-            # Convert to discrete fixture type
             fixture_type = int(round(fixture_type_norm * 2))
             fixture_type = np.clip(fixture_type, 0, 2)
             
-            # Get valid positions and select via normalized grid position
             if fixture_type > 0 and fixture_type <= 2:
                 valid_pairs, _, _ = self._compute_valid_action_positions()
                 
                 if len(valid_pairs) > 0:
-                    # Map normalized grid position [0,1] to valid pair index
                     grid_position_idx = int(grid_position_norm * len(valid_pairs))
                     grid_position_idx = np.clip(grid_position_idx, 0, len(valid_pairs) - 1)
                     
-                    # Get grid center position
                     x_idx, y_idx = valid_pairs[grid_position_idx]
                     grid_center_x = self.x_positions[x_idx]
                     grid_center_y = self.y_positions[y_idx]
                     
-                    # Apply continuous fine-tuning offset (±hybrid_offset_range mm)
                     center_x = grid_center_x + offset_x * self.hybrid_offset_range
                     center_y = grid_center_y + offset_y * self.hybrid_offset_range
                     
-                    # Clamp to workpiece bounds
                     center_x = np.clip(center_x, 0, self.workpiece_width)
                     center_y = np.clip(center_y, 0, self.workpiece_height)
         
         elif self.use_continuous_action_space:
-            # Continuous: [fixture_type_norm, x_norm, y_norm]
             fixture_type_norm = float(action[0])
             x_norm = float(action[1])
             y_norm = float(action[2])
             
-            # Convert to discrete fixture type
             fixture_type = int(round(fixture_type_norm))
             fixture_type = np.clip(fixture_type, 0, 2)
             
-            # Convert normalized coordinates to world coordinates
             center_x = x_norm * self.workpiece_width
             center_y = y_norm * self.workpiece_height
             center_x = np.clip(center_x, 0, self.workpiece_width)
             center_y = np.clip(center_y, 0, self.workpiece_height)
         
         else:
-            # Discrete: [fixture_type, pair_idx]
             fixture_type, pair_idx = action
         
-        # If fixture_type is 0 or invalid, do nothing (penalize inaction to encourage exploration)
         if fixture_type is None or fixture_type == 0:
             reward = -0.5
             info['reason'] = 'no_op_action'
         elif fixture_type > 0 and fixture_type <= 2:
-            # Check if fixture type is available
             if self.fixture_availability[fixture_type] <= 0:
                 reward = -1.0
                 info['reason'] = 'no_availability'
-            # Check if we can place more fixtures
             elif len(self.fixtures) >= self.max_fixtures:
                 reward = -1.0
                 info['reason'] = 'max_fixtures_reached'
             else:
-                # Compute valid objectives and select best action
                 valid_pairs, _, _ = self._compute_valid_action_positions()
                 valid_objectives = self._compute_valid_action_objectives()
                 
@@ -941,34 +824,26 @@ class FixtureLayoutEnv(gym.Env):
                     reward = -0.25
                     info['reason'] = 'no_valid_positions'
                 else:
-                    # Select the best valid action (highest MOI, far from center if first placement)
                     best_action = self._select_best_valid_action(valid_objectives)
                     
                     if best_action is None:
                         reward = -0.25
                         info['reason'] = 'no_valid_positions'
                     else:
-                        # Extract best action
                         best_x_idx, best_y_idx, best_fixture_type = best_action
                         
-                        # Get world coordinates for best position
                         center_x = self.x_positions[best_x_idx]
                         center_y = self.y_positions[best_y_idx]
                         fixture_type = best_fixture_type
                         
-                        # Now attempt placement with best position
                         if center_x is not None and center_y is not None:
-                            # Fixtures are placed without rotation
                             angle = 0.0
                             
-                            # Check if placement is valid
                             is_valid, reason = self._is_valid_placement(center_x, center_y, fixture_type, angle)
                             
                             if is_valid:
-                                # Compute valid positions BEFORE placement
                                 num_valid_before = len(valid_pairs)
                                 
-                                # Get objective value for this specific placement
                                 placement_moi = valid_objectives.get(best_action, None)
                                 
                                 width, height = FIXTURE_DIMENSIONS[fixture_type]
@@ -978,7 +853,6 @@ class FixtureLayoutEnv(gym.Env):
                                 state = FixtureState(x=top_left_x, y=top_left_y, angle=angle, type_id=fixture_type)
                                 self.fixtures.append(state)
                                 
-                                # PERFORMANCE: Update fixture cache for faster validity checks in next step
                                 fixture_idx = len(self.fixtures) - 1
                                 fx_center = top_left_x + width / 2
                                 fy_center = top_left_y + height / 2
@@ -988,7 +862,6 @@ class FixtureLayoutEnv(gym.Env):
                                     'type_id': fixture_type
                                 }
                                 
-                                # Compute valid positions AFTER placement
                                 valid_pairs_after, _, _ = self._compute_valid_action_positions()
                                 num_valid_after = len(valid_pairs_after)
                                 
@@ -1009,17 +882,14 @@ class FixtureLayoutEnv(gym.Env):
                                 info['valid_positions_after'] = num_valid_after
                                 info['placement_moi'] = placement_moi
                             else:
-                                # Should not happen since we selected from valid positions
                                 reward = -1.0
                                 info['reason'] = reason
         else:
-            # Invalid fixture type (should not happen given fixture_type validation)
             reward = -1.0
             info['reason'] = 'invalid_fixture_type'
         
         self.step_count += 1
         
-        # Update info with current state
         info['fixtures_count'] = len(self.fixtures)
         info['fixtures_available'] = dict(self.fixture_availability)
         info['sum_moments'] = self.cumulative_moment
@@ -1040,15 +910,12 @@ class FixtureLayoutEnv(gym.Env):
         """
         valid_points = []
         
-        # Create a grid of points
         x = self.visualizer.min_x
         while x <= self.visualizer.max_x:
             y = self.visualizer.min_y
             while y <= self.visualizer.max_y:
-                # Check if point is inside workpiece polygon
                 point = ShapelyPoint(x, y)
                 if self.workpiece_polygon.contains(point):
-                    # Check if not in exclusion zone
                     in_exclusion = False
                     for zone in self.exclusion_zones:
                         if zone.contains(point):
@@ -1073,26 +940,21 @@ class FixtureLayoutEnv(gym.Env):
         if len(self.fixtures) >= self.max_fixtures:
             return False, 'max_fixtures_reached'
         
-        # Get fixture dimensions
         width, height = FIXTURE_DIMENSIONS.get(fixture_type, (0, 0))
         if width == 0 or height == 0:
             return False, 'invalid_fixture_type'
         
-        # Calculate bounding box around center
         top_left_x = center_x - width / 2
         top_left_y = center_y - height / 2
         fixture_box = box(top_left_x, top_left_y, top_left_x + width, top_left_y + height)
         
-        # Check if entire fixture is within workpiece
         if not fixture_box.within(self.workpiece_polygon):
             return False, 'outside_workpiece'
         
-        # Check if overlaps with exclusion zones
         for zone in self.exclusion_zones:
             if fixture_box.intersects(zone):
                 return False, 'overlaps_hole'
         
-        # Check spacing constraints with existing fixtures
         for existing_fixture in self.fixtures:
             existing_width, existing_height = FIXTURE_DIMENSIONS[existing_fixture.type_id]
             existing_center_x = existing_fixture.x + existing_width / 2
@@ -1104,7 +966,6 @@ class FixtureLayoutEnv(gym.Env):
             if self._violates_spacing(dx, dy, existing_fixture.type_id, fixture_type):
                 return False, 'violates_spacing_constraint'
         
-        # Check for overlaps with other fixtures
         for existing_fixture in self.fixtures:
             existing_width, existing_height = FIXTURE_DIMENSIONS[existing_fixture.type_id]
             existing_box = box(
@@ -1139,16 +1000,12 @@ class FixtureLayoutEnv(gym.Env):
         same_column = dx < CENTER_ALIGNMENT_TOLERANCE
         
         if same_column:
-            # In same column, check vertical spacing
-            # Required spacing: (height1/2) + (height2/2) + VERTICAL_SECURITY_DISTANCE
             _, existing_height = FIXTURE_DIMENSIONS[existing_fixture_type]
             _, new_height = FIXTURE_DIMENSIONS[new_fixture_type]
             
             required_spacing = (existing_height / 2) + (new_height / 2) + VERTICAL_SECUIRITY_DISTANCE
             return dy < required_spacing
         else:
-            # Different columns, check horizontal spacing
-            # MiniZinc uses: xc(i) + WBar + WMin <= xc(j), where WBar=145, WMin=200, so spacing = 345
             required_spacing = 145 + HORIZONTAL_SECUIRITY_DISTANCE
             return dx < required_spacing
     
@@ -1184,30 +1041,20 @@ class FixtureLayoutEnv(gym.Env):
             placement_moi: MOI value if we place a fixture at the chosen position
             valid_objectives: Dictionary of all valid action objectives {(x_idx, y_idx, fixture_type): moi_value}
         """
-        # Base placement bonus - encourages placing fixtures
         placement_bonus = 25.0
         
-        # MOI-based reward: prioritize high objective values
-        # If we have objective information, reward based on how good this placement is
         objective_reward = 0.0
         if placement_moi is not None and valid_objectives is not None and len(valid_objectives) > 0:
-            # Find max MOI among all valid actions
             max_moi = max(valid_objectives.values())
             min_moi = min(valid_objectives.values())
             
             if max_moi > min_moi:
-                # Normalize placement MOI to [0, 1] range
                 moi_ratio = (placement_moi - min_moi) / (max_moi - min_moi)
             else:
                 moi_ratio = 0.5
             
-            # Reward for choosing high-MOI position
-            # Range: [0, +50] - heavily weighted to encourage max-MOI selection
-            # moi_ratio = 0.0 (worst) -> reward = 0
-            # moi_ratio = 1.0 (best) -> reward = 50
             objective_reward = moi_ratio * 50.0
         
-        # Fallback MOI reward if no objective info available
         if objective_reward == 0.0:
             if len(self.fixtures) == 1:
                 moi_reward = self.cumulative_moment / 1e6
@@ -1217,17 +1064,12 @@ class FixtureLayoutEnv(gym.Env):
                 moi_reward = (new_moment - old_moment) / 1e5
             objective_reward = max(0, moi_reward)
         
-        # Flexibility bonus: secondary preference to maintain options
         if total_valid_positions > 0:
             flexibility_ratio = remaining_valid_positions / total_valid_positions
             flexibility_bonus = (flexibility_ratio - 0.5) * 0.5
         else:
             flexibility_bonus = 0.0
         
-        # Total reward structure (descending priority):
-        # 1. Placement bonus (25.0) - ensures fixtures are placed
-        # 2. Objective reward (0 to 50.0) - DOMINANT for action selection
-        # 3. Flexibility bonus (±0.25) - tie-breaker
         return placement_bonus + objective_reward + flexibility_bonus
     
     def _get_observation(self) -> np.ndarray:
@@ -1235,23 +1077,19 @@ class FixtureLayoutEnv(gym.Env):
         obs = np.zeros(2 + (self.max_fixtures * 5) + 1, dtype=np.float32)
         idx = 0
         
-        # 1. Fixture availability (normalized)
         obs[idx] = self.fixture_availability[1] / FIXTURE_AVAILABILITY[1]
         idx += 1
         obs[idx] = self.fixture_availability[2] / FIXTURE_AVAILABILITY[2]
         idx += 1
         
-        # 2. Current placed fixtures
         for i, fixture in enumerate(self.fixtures):
             if i >= self.max_fixtures:
                 break
             
-            # Get center position
             width, height = FIXTURE_DIMENSIONS[fixture.type_id]
             center_x = fixture.x + width / 2
             center_y = fixture.y + height / 2
             
-            # Normalize coordinates
             norm_x = (center_x - self.visualizer.min_x) / max(1.0, (self.visualizer.max_x - self.visualizer.min_x))
             norm_y = (center_y - self.visualizer.min_y) / max(1.0, (self.visualizer.max_y - self.visualizer.min_y))
             norm_angle = fixture.angle / 360.0
@@ -1265,11 +1103,9 @@ class FixtureLayoutEnv(gym.Env):
             idx += 1
             obs[idx] = norm_type
             idx += 1
-            obs[idx] = 1.0  # Fixture is active
+            obs[idx] = 1.0  
             idx += 1
         
-        # 3. Sum of moments of inertia (normalized)
-        # Normalize to a reasonable range (assuming max is around 1e10)
         obs[idx] = min(1.0, self.cumulative_moment / 1e10)
         
         return obs
@@ -1283,22 +1119,18 @@ class FixtureLayoutEnv(gym.Env):
     
     def _render_human(self):
         """Render to display with persistent figure."""
-        # Create figure on first render
         if self.fig is None:
-            plt.ion()  # Enable interactive mode
+            plt.ion()
             self.fig, self.ax = plt.subplots(figsize=self.visualizer.figure_size)
             self.is_displaying = True
         
-        # Clear and redraw
         self.ax.clear()
         
-        # Convert fixtures to full fixture format for visualization
         display_fixtures = []
         if self.fixtures:
             computed_fixtures = define_fixture_from_state(self.fixtures)
             display_fixtures = computed_fixtures
         
-        # Transform workpiece vertices to mathematical coordinate system
         workpiece_height = self.visualizer.max_y - self.visualizer.min_y
         transformed_vertices = []
         for vx, vy in self.workpiece_data['vertices']:
@@ -1306,7 +1138,6 @@ class FixtureLayoutEnv(gym.Env):
             y_transformed = workpiece_height - (vy - self.visualizer.min_y)
             transformed_vertices.append((x_transformed, y_transformed))
         
-        # Draw workpiece boundary
         workpiece_poly = patches.Polygon(
             transformed_vertices,
             closed=True,
@@ -1317,10 +1148,9 @@ class FixtureLayoutEnv(gym.Env):
         )
         self.ax.add_patch(workpiece_poly)
         
-        # Draw holes (excluded regions) - transform to mathematical space
         if 'holes' in self.workpiece_data:
             for hole in self.workpiece_data['holes']:
-                if len(hole) == 3:  # Circle: [cx, cy, radius]
+                if len(hole) == 3: 
                     x_hole_transformed = hole[0] - self.visualizer.min_x
                     y_hole_transformed = workpiece_height - (hole[1] - self.visualizer.min_y)
                     circle = patches.Circle(
@@ -1334,12 +1164,10 @@ class FixtureLayoutEnv(gym.Env):
                     )
                     self.ax.add_patch(circle)
         
-        # Draw valid action positions with color-coded MOI values (no text labels)
         if len(self.fixtures) < self.max_fixtures and (self.fixture_availability[1] > 0 or self.fixture_availability[2] > 0):
             valid_pairs, _, _ = self._compute_valid_action_positions()
             valid_objectives = self._compute_valid_action_objectives()
             
-            # Find max MOI for color scaling
             if valid_objectives:
                 max_moi = max(valid_objectives.values())
                 min_moi = min(valid_objectives.values())
@@ -1347,12 +1175,10 @@ class FixtureLayoutEnv(gym.Env):
             else:
                 max_moi = min_moi = moi_range = 1.0
             
-            # Draw valid positions with color-coded MOI values (red=low, green=high)
             for x_idx, y_idx in valid_pairs:
                 x_pos = self.x_positions[x_idx]
                 y_pos = self.y_positions[y_idx]
                 
-                # Find best MOI at this position
                 best_moi = None
                 for fixture_type in [1, 2]:
                     key = (x_idx, y_idx, fixture_type)
@@ -1360,25 +1186,18 @@ class FixtureLayoutEnv(gym.Env):
                         if best_moi is None or valid_objectives[key] > best_moi:
                             best_moi = valid_objectives[key]
                 
-                # Color code by MOI value: red (low) to green (high)
                 if best_moi is not None and moi_range > 0:
-                    # Normalize MOI to [0, 1] for color mapping
                     norm_moi = (best_moi - min_moi) / moi_range
-                    # Red (low) to Yellow (med) to Green (high)
                     if norm_moi < 0.5:
-                        # Red to Yellow
                         r, g, b = 1.0, 2 * norm_moi, 0.0
                     else:
-                        # Yellow to Green
                         r, g, b = 2 * (1 - norm_moi), 1.0, 0.0
                 else:
-                    # Default green if no objective
                     r, g, b = 0.0, 1.0, 0.0
                 
-                # Draw colored marker for this valid position
                 valid_marker = patches.Circle(
                     (x_pos, y_pos),
-                    4,  # radius
+                    4, 
                     edgecolor=(r, g, b),
                     facecolor=(r, g, b),
                     alpha=0.7,
@@ -1387,11 +1206,9 @@ class FixtureLayoutEnv(gym.Env):
                 )
                 self.ax.add_patch(valid_marker)
         
-        # Draw fixtures
         for idx, fixture in enumerate(display_fixtures):
             self._draw_fixture_on_ax(self.ax, fixture, idx)
         
-        # Set axis properties
         x_min = 0 - self.visualizer.padding
         x_max = (self.visualizer.max_x - self.visualizer.min_x) + self.visualizer.padding
         y_min = 0 - self.visualizer.padding
@@ -1401,7 +1218,6 @@ class FixtureLayoutEnv(gym.Env):
         self.ax.set_ylim(y_min, y_max)
         self.ax.set_aspect('equal')
         
-        # Title with moment of inertia information
         title = (f"{self.workpiece_name} - Step {self.step_count}/{self.max_steps} - "
                 f"Fixtures: {len(self.fixtures)}/{self.max_fixtures} - "
                 f"Σ MOI: {self.cumulative_moment:.2e}")
@@ -1410,20 +1226,17 @@ class FixtureLayoutEnv(gym.Env):
         self.ax.set_ylabel('Y (mm)')
         self.ax.grid(True, alpha=0.3)
         
-        # Update display
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
         plt.pause(0.01)
     
     def _draw_spacing_guides(self):
         """Draw spacing constraint visualization."""
-        # Optional: Draw spacing guides for placed fixtures
         for fixture in self.fixtures:
             width, height = FIXTURE_DIMENSIONS[fixture.type_id]
             center_x = fixture.x + width / 2
             center_y = fixture.y + height / 2
             
-            # Draw horizontal spacing circle
             circle_h = patches.Circle(
                 (center_x, center_y),
                 HORIZONTAL_SECUIRITY_DISTANCE / 2,
@@ -1435,7 +1248,6 @@ class FixtureLayoutEnv(gym.Env):
             )
             self.ax.add_patch(circle_h)
             
-            # Draw vertical spacing circle
             circle_v = patches.Circle(
                 (center_x, center_y),
                 VERTICAL_SECUIRITY_DISTANCE / 2,
@@ -1453,11 +1265,9 @@ class FixtureLayoutEnv(gym.Env):
         if not state:
             return
         
-        # Get fixture dimensions
         t = state.type_id
         width, height = FIXTURE_DIMENSIONS.get(t, (0, 0))
         
-        # Calculate corners
         corners = [
             (state.x, state.y),
             (state.x + width, state.y),
@@ -1465,7 +1275,6 @@ class FixtureLayoutEnv(gym.Env):
             (state.x, state.y + height),
         ]
         
-        # Rotate corners around center
         center_x = state.x + width / 2
         center_y = state.y + height / 2
         angle_rad = math.radians(state.angle)
@@ -1478,7 +1287,6 @@ class FixtureLayoutEnv(gym.Env):
             ry = dx * math.sin(angle_rad) + dy * math.cos(angle_rad) + center_y
             rotated_corners.append((rx, ry))
         
-        # Draw fixture
         colors = ['blue', 'green', 'orange', 'purple', 'brown']
         color = colors[fixture_id % len(colors)]
         
@@ -1492,14 +1300,11 @@ class FixtureLayoutEnv(gym.Env):
         )
         ax.add_patch(fixture_poly)
         
-        # Draw center point
         ax.plot(center_x, center_y, 'k+', markersize=8, markeredgewidth=2)
         
-        # Add fixture ID label
         ax.text(center_x, center_y, str(fixture_id), 
                 fontsize=8, ha='center', va='center', color='white', fontweight='bold')
         
-        # Add center coordinates label
         coord_text = f"({center_x:.1f}, {center_y:.1f})"
         ax.text(center_x, center_y + 15, coord_text, 
                 fontsize=7, ha='center', va='bottom', color='black', 
@@ -1558,14 +1363,14 @@ def fixtures_to_solution_json(fixtures: List[FixtureState], objective_value: flo
         (x3, y3) = upper-left corner
     """
     solution = {
-        "x": [],      # lower left x
-        "y": [],      # lower left y
-        "x1": [],     # lower right x
-        "y1": [],     # lower right y
-        "x2": [],     # upper right x
-        "y2": [],     # upper right y
-        "x3": [],     # upper left x
-        "y3": [],     # upper left y
+        "x": [],      
+        "y": [],    
+        "x1": [],    
+        "y1": [],    
+        "x2": [],    
+        "y2": [],     
+        "x3": [],    
+        "y3": [],    
         "angle": [],
         "fixtures_center_x": [],
         "fixtures_center_y": [],
@@ -1575,20 +1380,15 @@ def fixtures_to_solution_json(fixtures: List[FixtureState], objective_value: flo
         "objective_value": int(objective_value)
     }
     
-    # Calculate workpiece height to transform from mathematical space back to original space
     workpiece_height = visualizer.max_y - visualizer.min_y
     
     for fixture_idx, fixture in enumerate(fixtures):
         width, height = FIXTURE_DIMENSIONS[fixture.type_id]
         
-        # Fixtures are stored in mathematical space (0,0 at lower-left, y increases upward)
-        # Transform back to original space (same as workpieces_information.json)
-        # Transformation: y_original = workpiece_height - y_math
         
         x_math = fixture.x
         y_math = fixture.y
         
-        # Compute all four corners in mathematical space
         ll_x_math = x_math              # lower-left
         ll_y_math = y_math
         
@@ -1601,7 +1401,6 @@ def fixtures_to_solution_json(fixtures: List[FixtureState], objective_value: flo
         ul_x_math = x_math              # upper-left
         ul_y_math = y_math + height
         
-        # Transform to original space
         ll_x_orig = float(ll_x_math)
         ll_y_orig = float(workpiece_height - ll_y_math)
         
@@ -1614,9 +1413,6 @@ def fixtures_to_solution_json(fixtures: List[FixtureState], objective_value: flo
         ul_x_orig = float(ul_x_math)
         ul_y_orig = float(workpiece_height - ul_y_math)
         
-        # Ensure correct corner order by finding min/max coordinates
-        # In original space, "lower" means larger y (more downward)
-        # "upper" means smaller y (more upward)
         all_xs = [ll_x_orig, lr_x_orig, ur_x_orig, ul_x_orig]
         all_ys = [ll_y_orig, lr_y_orig, ur_y_orig, ul_y_orig]
         
@@ -1625,7 +1421,6 @@ def fixtures_to_solution_json(fixtures: List[FixtureState], objective_value: flo
         min_y = min(all_ys)
         max_y = max(all_ys)
         
-        # Assign corners in correct order
         x_ll = min_x
         y_ll = min_y
         
@@ -1638,7 +1433,6 @@ def fixtures_to_solution_json(fixtures: List[FixtureState], objective_value: flo
         x_ul = min_x
         y_ul = max_y
         
-        # Calculate center in original space
         center_x_orig = float(x_math + width / 2)
         center_y_orig = float(workpiece_height - (y_math + height / 2))
         
@@ -1653,7 +1447,7 @@ def fixtures_to_solution_json(fixtures: List[FixtureState], objective_value: flo
         solution["angle"].append(int(fixture.angle))
         solution["fixtures_center_x"].append(center_x_orig)
         solution["fixtures_center_y"].append(center_y_orig)
-        solution["bars_center"].append(int(center_x_orig))  # Same as fixtures_center_x, just as integer
+        solution["bars_center"].append(int(center_x_orig))  
         solution["selected_fixture"].append(1)
         solution["fixture_type"].append(int(fixture.type_id))
     
@@ -1692,7 +1486,6 @@ def main():
     
     args = parser.parse_args()
     
-    # Create environment
     env = FixtureLayoutEnv(
         workpiece_name=args.workpiece,
         render_mode="human" if args.render else None
@@ -1706,11 +1499,9 @@ def main():
     print(f"  Type 2 Spacing: Horizontal={get_horizontal_spacing(2):.1f}mm, Vertical={get_vertical_spacing(2):.1f}mm")
     print(f"  Fixture dimensions: Type1={FIXTURE_DIMENSIONS[1]}, Type2={FIXTURE_DIMENSIONS[2]}")
     
-    # Track best solution
     best_solution = None
     best_objective = -float('inf')
     
-    # Run episodes
     for episode in range(args.episodes):
         obs, info = env.reset()
         print(f"\n=== Episode {episode + 1}/{args.episodes} ===")
@@ -1721,7 +1512,6 @@ def main():
         total_moment = 0.0
         
         while not (done or truncated):
-            # Random action for testing
             action = env.action_space.sample()
             obs, reward, done, truncated, info = env.step(action)
             episode_reward += reward
@@ -1736,14 +1526,12 @@ def main():
         
         print(f"  Episode Total Reward: {episode_reward:.2f}, Final sum_MOI: {total_moment:.2e}")
         
-        # Track best solution
         if total_moment > best_objective and len(env.fixtures) > 0:
             best_objective = total_moment
             best_solution = (env.fixtures.copy(), total_moment)
     
     env.close()
     
-    # Save best solution
     if best_solution is not None:
         fixtures, objective_value = best_solution
         print(f"\n[DEBUG] Best solution has {len(fixtures)} fixtures:")

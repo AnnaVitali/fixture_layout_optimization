@@ -4,9 +4,9 @@ from matplotlib.patches import Polygon, Rectangle
 
 
 # Wong 8-Color Palette (colorblind-friendly)
-RECT1_COLOR = "#56B4E9"    # Sky Blue
-RECT2_COLOR = "#D55E00"    # Vermillion
-OVERLAP_COLOR = "#009E73"  # Bluish Green
+RECT1_COLOR = "#56B4E9"    
+RECT2_COLOR = "#D55E00"   
+OVERLAP_COLOR = "#009E73"  
 
 def rotate_rectangle(center_x, center_y, width, height, angle_degrees):
     """Return the corners of a rotated rectangle."""

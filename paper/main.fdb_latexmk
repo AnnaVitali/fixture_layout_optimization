@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex main"] 1785751218.31184 "main.aux" "main.bbl" "main" 1785751219.42725 2
+["bibtex main"] 1785760310.73649 "main.aux" "main.bbl" "main" 1785760311.56134 2
   "./bibliography.bib" 1785740535 16460 dc94f8fa67ab0276694599c44a432b37 ""
   "./elsarticle-num.bst" 1783080144 29353 cbd593ca59c003368735a9d8dbd22298 ""
-  "main.aux" 1785751219 8192 69bade98ede88195d7c9fc7f86705d35 "pdflatex"
+  "main.aux" 1785760302 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1785751207.70856 "c:/Users/anvitali/Desktop/fixture_layout_optimization/paper/main.tex" "main.pdf" "main" 1785751219.42915 0
+["pdflatex"] 1785760302.79087 "c:/Users/anvitali/Desktop/fixture_layout_optimization/paper/main.tex" "main.pdf" "main" 1785760309.34542 0
   "SDlogo-3p.pdf" 1783080144 32832 4c44d6c52fa62ecd42842252126ea898 ""
   "c:/Users/anvitali/Desktop/fixture_layout_optimization/paper/main.tex" 1785743133 12509 50a91c61ab5c21744a1f86ca4e3a740b ""
   "c:/texlive/2025/texmf-dist/fonts/enc/dvips/base/8r.enc" 1769995346 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
@@ -245,19 +245,19 @@
   "img/suction_cups_schema_no_dimnesion.jpg" 1770936963 49111 742e7741b7150c8e11b72b933abc17f3 ""
   "img/valid_invalid_positions_example.png" 1785491041 60754 a412de2a1ee464091168cbd06f5d8894 ""
   "img/worktable.png" 1770936963 161121 595b78aab136ce7027f02bb68dec7ab1 ""
-  "main.aux" 1785751219 8192 69bade98ede88195d7c9fc7f86705d35 "pdflatex"
-  "main.bbl" 1785751219 0 d41d8cd98f00b204e9800998ecf8427e "bibtex main"
-  "main.spl" 1785751216 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "main.aux" 1785760302 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
+  "main.bbl" 1785760311 0 d41d8cd98f00b204e9800998ecf8427e "bibtex main"
+  "main.spl" 1785760304 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
   "main.tex" 1785743133 12509 50a91c61ab5c21744a1f86ca4e3a740b ""
   "paper_parts/background.tex" 1785749038 4193 183d3fdc1f63e58f45d5f9c982b60801 ""
   "paper_parts/conclusion.tex" 1785750227 1952 ca49e607d4e43eaf8495f3d4b813782d ""
-  "paper_parts/cp_model.tex" 1785749397 5680 44f98bec6900a5df290de961d42f575c ""
-  "paper_parts/evaluation.tex" 1785751201 24429 0fc344a5a139f15b12e8b879b203b36b ""
+  "paper_parts/cp_model.tex" 1785757240 5713 235b6255b32b284d5be69fe184e9d37f ""
+  "paper_parts/evaluation.tex" 1785760298 24690 66af05a04c6a3382a072de0ca4a8b214 ""
   "paper_parts/introduction.tex" 1785748918 4999 aa56001eccddfb7606f80b2bf0199152 ""
-  "paper_parts/mip_model.tex" 1785749520 5108 ac2beb3f6789030341d5cd0ada486aa1 ""
+  "paper_parts/mip_model.tex" 1785757429 5109 36e60cda6d4b5219de138f4b576568f3 ""
   "paper_parts/problem_description.tex" 1785749652 5176 bb6d04ce61530ee20c385574bf8451c1 ""
-  "paper_parts/pso.tex" 1785749718 11369 82a283e47b90539ba03646fdb0ee5c33 ""
-  "paper_parts/reinforcement_learning.tex" 1785749649 10225 0bd310ac9c164274b37bc627a34b1a8b ""
+  "paper_parts/pso.tex" 1785759843 11303 2fb9294412efee35ec4b2fdcae62d1fe ""
+  "paper_parts/reinforcement_learning.tex" 1785758510 10520 b422d7f9b97d693f968beaee7f5b187d ""
   "paper_parts/related_work.tex" 1785751084 4269 bbf3151d59b02482acd50639249ed9bd ""
   (generated)
   "main.aux"

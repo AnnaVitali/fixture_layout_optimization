@@ -1,24 +1,11 @@
-"""
-Unified script to generate all LaTeX tables:
-1. Simple Comparison Table (CP, MIP, RL without images)
-2. Detailed Comparison Table (with images)
-3. Objective Table ($\fdist$ and $\finer$)
-4. Runtime Table (solve times)
-"""
-
 from pathlib import Path
 from collections import defaultdict
 import shutil
 
 
-# ============================================================================
-# PARSING FUNCTIONS
-# ============================================================================
-
 def parse_inertia_reports(filepath):
-    """Parse inertia_reports.txt to extract objective values."""
     data = defaultdict(lambda: defaultdict(lambda: None))
-    provider_map = defaultdict(lambda: defaultdict(lambda: None))  # Track full provider names
+    provider_map = defaultdict(lambda: defaultdict(lambda: None)) 
     
     with open(filepath, 'r') as f:
         for line in f:
@@ -55,7 +42,6 @@ def parse_inertia_reports(filepath):
             elif provider == 'expert_operator':
                 solver_key = 'expert'
             elif provider.startswith('pso_'):
-                # PSO providers: pso_cp_pso, pso_mip_pso, pso_rl_pso, pso_eo_pso
                 solver_key = provider
             
             if solver_key:
@@ -66,7 +52,6 @@ def parse_inertia_reports(filepath):
 
 
 def parse_runtime_reports(filepath):
-    """Parse runtime_reports.txt for both objective values and runtime data."""
     fdist_data = defaultdict(lambda: defaultdict(lambda: None))
     timeout_data = defaultdict(lambda: defaultdict(lambda: False))
     solve_time_data = defaultdict(lambda: defaultdict(lambda: None))
@@ -96,7 +81,6 @@ def parse_runtime_reports(filepath):
             if objective_str == '--' or objective_str == 'N/A':
                 continue
             
-            # Handle N/A for solve_time
             if solve_time_str == 'N/A':
                 solve_time = None
             else:
@@ -132,10 +116,6 @@ def parse_runtime_reports(filepath):
     
     return fdist_data, solve_time_data, timeout_data, runtime_data
 
-
-# ============================================================================
-# FORMATTING FUNCTIONS
-# ============================================================================
 
 def format_objective(value, is_max=False):
     """Format objective value in scientific notation with optional bold."""
@@ -194,10 +174,6 @@ def format_solve_time(value):
     return f"{value:.3f}"
 
 
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
-
 def find_max_values(data, workpieces, solvers):
     """Find maximum values for each workpiece."""
     max_vals = {}
@@ -245,10 +221,6 @@ def copy_image_to_paper_dir(workpiece, solver_key):
     
     return image_filename
 
-
-# ============================================================================
-# TABLE GENERATION FUNCTIONS
-# ============================================================================
 
 def generate_simple_comparison_table(data, workpieces, solvers):
     """Generate simple LaTeX table without images."""
@@ -357,7 +329,6 @@ def generate_detailed_comparison_table(data, workpieces, solvers):
         mip_is_best = mip_best == overall_best if mip_best else False
         rl_is_best = rl_best == overall_best if rl_best else False
         
-        # Format CP cell
         if cp_best is not None:
             cp_formatted = format_objective(cp_best, is_max=cp_is_best)
             img_file = copy_image_to_paper_dir(workpiece, cp_best_solver)
@@ -375,7 +346,6 @@ def generate_detailed_comparison_table(data, workpieces, solvers):
         else:
             cp_cell = "--"
         
-        # Format MIP cell
         if mip_best is not None:
             mip_formatted = format_objective(mip_best, is_max=mip_is_best)
             img_file = copy_image_to_paper_dir(workpiece, 'gurobi')
@@ -386,7 +356,6 @@ def generate_detailed_comparison_table(data, workpieces, solvers):
         else:
             mip_cell = "--"
         
-        # Format RL cell
         if rl_best is not None:
             rl_formatted = format_objective(rl_best, is_max=rl_is_best)
             img_file = copy_image_to_paper_dir(workpiece, 'rl')
@@ -413,7 +382,6 @@ def generate_detailed_comparison_table(data, workpieces, solvers):
 
 
 def generate_unified_objective_runtime_table(fdist_data, finer_data, solve_time_data, runtime_data, timeout_data, workpieces, solvers):
-    """Generate unified LaTeX table for objective values and runtime."""
     max_fdist = find_max_values(fdist_data, workpieces, solvers)
     max_finer = find_max_values(finer_data, workpieces, solvers)
     
@@ -455,7 +423,6 @@ def generate_unified_objective_runtime_table(fdist_data, finer_data, solve_time_
         
         workpiece_cell = f"\\multirow{{3}}{{*}}{{\\makecell{{{display_name}}}}}"
         
-        # $\fdist$ row
         fdist_values = []
         for solver in solvers:
             value = fdist_data[workpiece][solver]
@@ -467,7 +434,6 @@ def generate_unified_objective_runtime_table(fdist_data, finer_data, solve_time_
         fdist_row = f"        {workpiece_cell} & $\\fdist$ & " + " & ".join(fdist_values) + " \\\\"
         lines.append(fdist_row)
         
-        # $\finer$ row
         finer_values = []
         for solver in solvers:
             value = finer_data[workpiece][solver]
@@ -486,11 +452,9 @@ def generate_unified_objective_runtime_table(fdist_data, finer_data, solve_time_
         finer_row = "        & $\\finer$ & " + " & ".join(finer_values) + " \\\\"
         lines.append(finer_row)
         
-        # Solve time row
         solve_time_values = []
         for solver in solvers:
             runtime = runtime_data[workpiece][solver]
-            # Display solve time only if runtime < 300 (not a timeout), otherwise display "--"
             if runtime is not None and runtime >= 300.0:
                 formatted = "--"
             else:
@@ -513,7 +477,6 @@ def generate_unified_objective_runtime_table(fdist_data, finer_data, solve_time_
 
 
 def generate_objective_table(fdist_data, finer_data, timeout_data, workpieces, solvers):
-    """Generate LaTeX table for objective values."""
     max_fdist = find_max_values(fdist_data, workpieces, solvers)
     max_finer = find_max_values(finer_data, workpieces, solvers)
     
@@ -597,7 +560,6 @@ def generate_objective_table(fdist_data, finer_data, timeout_data, workpieces, s
 
 
 def generate_runtime_table(solve_time_data, workpieces, solvers):
-    """Generate LaTeX table for runtime."""
     lines = []
     lines.append("\\begin{table}[t]")
     lines.append("    \\centering")
@@ -657,7 +619,6 @@ def generate_runtime_table(solve_time_data, workpieces, solvers):
 
 
 def generate_best_solutions_table(data, provider_map, workpieces):
-    """Generate table with EO, Best CP/MIP, Best RL, and Best PSO."""
     lines = []
     lines.append("\\begin{table}[t]")
     lines.append("\t\\centering")
@@ -684,19 +645,15 @@ def generate_best_solutions_table(data, provider_map, workpieces):
     for workpiece in workpieces:
         display_name = workpiece_display_names.get(workpiece, workpiece)
         
-        # Get Expert Operator value
         eo_value = data[workpiece]['expert']
         
-        # Get best CP solution
         cp_solvers = ['gecode', 'lns', 'chuffed', 'or-tools']
         cp_values = {s: data[workpiece][s] for s in cp_solvers if data[workpiece][s] is not None}
         cp_best = max(cp_values.values()) if cp_values else None
         cp_best_solver = [s for s, v in cp_values.items() if v == cp_best][0] if cp_best else None
         
-        # Get best MIP solution
         mip_value = data[workpiece]['gurobi']
         
-        # Determine best CP/MIP and provider label
         cp_mip_values = {}
         if cp_best is not None:
             cp_mip_values['CP'] = (cp_best, cp_best_solver)
@@ -707,7 +664,6 @@ def generate_best_solutions_table(data, provider_map, workpieces):
             best_cp_mip_value = max([v[0] for v in cp_mip_values.values()])
             best_cp_mip_providers = [k for k, v in cp_mip_values.items() if v[0] == best_cp_mip_value]
             provider_label = ", ".join(sorted(best_cp_mip_providers))
-            # Use first provider for image
             first_provider = best_cp_mip_providers[0]
             if first_provider == 'CP':
                 img_solver = cp_best_solver
@@ -718,16 +674,13 @@ def generate_best_solutions_table(data, provider_map, workpieces):
             provider_label = None
             img_solver = None
         
-        # Get best RL solution
         rl_value = data[workpiece]['rl']
         
-        # Get best PSO solution
         pso_solvers = ['pso_cp_pso', 'pso_mip_pso', 'pso_rl_pso', 'pso_eo_pso']
         pso_values = {s: data[workpiece][s] for s in pso_solvers if data[workpiece][s] is not None}
         pso_best = max(pso_values.values()) if pso_values else None
         pso_best_key = [s for s, v in pso_values.items() if v == pso_best][0] if pso_best else None
         
-        # Map PSO solver key to display name (starting solution)
         pso_display_map = {
             'pso_cp_pso': 'CP',
             'pso_mip_pso': 'MIP',
@@ -736,7 +689,6 @@ def generate_best_solutions_table(data, provider_map, workpieces):
         }
         pso_best_provider = pso_display_map.get(pso_best_key, 'Unknown')
         
-        # Format EO cell
         eo_formatted = format_objective(eo_value)
         eo_img = copy_image_to_paper_dir(workpiece, 'expert')
         if eo_img:
@@ -744,7 +696,6 @@ def generate_best_solutions_table(data, provider_map, workpieces):
         else:
             eo_cell = f"\\makecell{{${eo_formatted}$}}"
         
-        # Format Best CP/MIP cell
         if best_cp_mip_value is not None and provider_label is not None:
             cpmip_formatted = format_objective(best_cp_mip_value)
             cpmip_img = copy_image_to_paper_dir(workpiece, img_solver)
@@ -755,7 +706,6 @@ def generate_best_solutions_table(data, provider_map, workpieces):
         else:
             cpmip_cell = "--"
         
-        # Format Best RL cell
         if rl_value is not None:
             rl_formatted = format_objective(rl_value)
             rl_img = copy_image_to_paper_dir(workpiece, 'rl')
@@ -766,7 +716,6 @@ def generate_best_solutions_table(data, provider_map, workpieces):
         else:
             rl_cell = "--"
         
-        # Format Best PSO cell
         if pso_best is not None:
             pso_formatted = format_objective(pso_best)
             pso_img = copy_image_to_paper_dir(workpiece, pso_best_key)
@@ -777,7 +726,6 @@ def generate_best_solutions_table(data, provider_map, workpieces):
         else:
             pso_cell = "--"
         
-        # Build row
         row = f"\t\t\\makecell{{{display_name}}} & {eo_cell} & {cpmip_cell} & {rl_cell} & {pso_cell} \\\\"
         lines.append(row)
         lines.append("\t\t\\hline")
@@ -787,11 +735,6 @@ def generate_best_solutions_table(data, provider_map, workpieces):
     
     return "\n".join(lines)
 
-
-
-# ============================================================================
-# MAIN
-# ============================================================================
 
 def main():
     base_path = Path(__file__).parent.parent / 'solutions' / 'reports'
@@ -808,12 +751,10 @@ def main():
     
     print("Generating tables...")
     
-    # Generate all tables
     simple_comparison = generate_simple_comparison_table(inertia_data, workpieces, solvers_comparison)
     best_solutions = generate_best_solutions_table(inertia_data, provider_map, workpieces)
     unified_objective_runtime = generate_unified_objective_runtime_table(fdist_data, inertia_data, solve_time_data, runtime_data, timeout_data, workpieces, solvers_objective)
     
-    # Write all tables to single output file
     output_file = base_path / 'all_tables.tex'
     with open(output_file, 'w') as f:
         f.write("% ============================================================================\n")
@@ -839,7 +780,6 @@ def main():
     print("  2. Best Solutions Table (EO, CP/MIP, RL, Best with PSO)")
     print("  3. Unified Objective and Runtime Table ($\\fdist$, $\\finer$, solve times)")
     
-    # Also write individual table files for compatibility
     print("\nAlso generating individual table files...")
     
     (base_path / 'comparison_table_simple.tex').write_text(simple_comparison)
