@@ -62,6 +62,11 @@ class InertiaAnalysis:
         jx = abs(jx) / 12
         jy = abs(jy) / 12
         jxy = abs(jxy) / 24
+        
+        # jx = jx / 12
+        # jy = jy / 12
+        # jxy = jxy / 24
+        
 
         return jx, jy, jxy
 

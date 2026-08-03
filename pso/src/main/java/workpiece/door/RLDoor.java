@@ -25,7 +25,7 @@ import java.util.List;
 public class RLDoor {
 
     private static final String RL_FILE_PATH = "./resources/rl/rl_door.json";
-    private static final String RESULT_FILE_PATH = "./resources/pso/pso_cp_door.json";
+    private static final String RESULT_FILE_PATH = "./resources/pso/pso_rl_door.json";
 
 
     public static void main(String[] args) {

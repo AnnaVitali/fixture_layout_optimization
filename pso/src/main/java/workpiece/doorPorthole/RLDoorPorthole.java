@@ -26,7 +26,7 @@ import java.util.List;
 public class RLDoorPorthole {
 
     private static final String RL_FILE_PATH = "./resources/rl/rl_door_porthole.json";
-    private static final String RESULT_FILE_PATH = "./resources/pso/pso_cp_door_porthole.json";
+    private static final String RESULT_FILE_PATH = "./resources/pso/pso_rl_door_porthole.json";
 
 
     public static void main(String[] args) {
@@ -37,7 +37,7 @@ public class RLDoorPorthole {
             throw new RuntimeException(e);
         }
 
-        Door door = new Door();
+        DoorPorthole door = new DoorPorthole();
 
         NoOverlapConstraint noOverlapConstraint = new NoOverlapConstraint(door.getHoles());
         GeometryConstraint geometryConstraint = new GeometryConstraint(door.getInequalities(), door.getVertices().stream().toList(),

@@ -1,0 +1,92 @@
+\label{sec:backgorund}
+In this section, we introduce the concept of principal moments of inertia. In the proposed resolution strategies, the moments of inertia are used to define the objective function of the fixture layout optimization problem.
+
+\subsection{Principal moments of inertia}
+
+To maximize the stability of the workpiece through fixture placement, the \textit{principal moments} of inertia of the fixture layout system can be analyzed.
+
+The moment of inertia is a geometric property that quantifies a structure’s resistance to bending and torsional forces. It is computed from the distribution of mass relative to a given axis and plays a crucial role in determining the stiffness of structural elements under load. Higher moments of inertia indicate greater resistance to deformation, making this quantity a key factor in the design of fixtures that minimize workpiece deflection during machining operations~\cite{kalkan2013deflection,bischoff2011equivalent}.
+
+To compute the principal moments of inertia of a rectangular fixture system~\cite{belluzzi1961scienza,coultas1925theory,hibbeler2006structural}, each fixture can be represented as a polygon $i$ of $m$ vertices $(x_{i,1}, y_{i,1}), \ldots, (x_{i,m}, y_{i,m})$ with area $A_i$, centroid coordinates $(cx_{i}, cy_{i})$ and rotation angle $\alpha_i$. We first compute the \textit{absolute moments} of inertia of each polygon with respect to the global coordinate system:
+%%\begin{gather}
+\begin{align*}
+	J'_{x,i} 
+	&= \tfrac{1}{12} \sum_{j=1}^{m} 
+	(y_{i,j}^2 + y_{i,j}y_{i,j+1} + y_{i,j+1}^2)(x_{i,j}y_{i,j+1} - x_{i,j+1}y_{i,j}) \\
+	%
+	J'_{y,i} 
+	&= \tfrac{1}{12} \sum_{j=1}^{m} 
+	(x_{i,j}^2 + x_{i,j}x_{i,j+1} + x_{i,j+1}^2) (x_{i,j}y_{i,j+1} - x_{i,j+1}y_{i,j}) \\
+	%
+	J'_{xy,i} 
+	&= \tfrac{1}{24} \sum_{j=1}^{m} 
+	(x_{i,j}y_{i,j+1} + 2x_{i,j}y_{i,j} + 2x_{i,j+1}y_{i,j+1} + x_{i,j+1}y_{i,j}) (x_{i,j}y_{i,j+1} - x_{i,j+1}y_{i,j}).
+\end{align*}
+%%\end{gather}
+
+\noindent The moments of inertia referred to the centroid of each polygon are then computed as:
+%%\begin{gather}
+\begin{align*}
+	J''_{x,i}  = J'_{x,i}  - A_i\,cy_{i}^2, \qquad
+	J''_{y,i}  = J'_{y,i}  - A_i\,cx_{i}^2, \qquad
+	J''_{xy,i} = J'_{xy,i} - A_i\,cx_{i}\,cy_{i}.
+\end{align*}
+%%\end{gather}
+
+\noindent Since a polygon can be rotated by an angle $\alpha_i$, the corresponding rotated moments are:
+%\begin{gather}
+\begin{align*}
+	J_{x,i} &= J''_{x,i}\cos^2\alpha_i + J''_{y,i}\sin^2\alpha_i - 2J''_{xy,i}\sin\alpha_i\cos\alpha_i,\\
+	J_{y,i} &= J''_{x,i}\sin^2\alpha_i + J''_{y,i}\cos^2\alpha_i - 2J''_{xy,i}\sin\alpha_i\cos\alpha_i,\\
+	J_{xy,i} &= (J''_{x,i} - J''_{y,i})\sin\alpha_i\cos\alpha_i + J''_{xy,i}(\cos^2\alpha_i - \sin^2\alpha_i).
+\end{align*}
+%\end{gather}
+
+\noindent The total moments of inertia with respect to the global axes are then computed as:
+%\begin{gather}
+\begin{align*}
+	J_x &= \sum_{i=1}^{n} J_{x,i} + A_i(cy_{i} - g_y)^2, \qquad
+	J_y = \sum_{i=1}^{n} J_{y,i} + A_i(cx_{i} - g_x)^2,\\
+	J_{xy} &= \sum_{i=1}^{n} J_{xy,i} + A_i(cx_{i} - g_x)(cy_{i} - g_y)
+\end{align*}
+%\end{gather}
+where $g_x$ and $g_y$ denote the coordinates of the overall centroid of the system, computed as:
+%\begin{gather}
+\begin{align*}
+	g_x = \frac{\sum_{i=1}^{n} A_i\, cx_{i}}{A}, \qquad
+	g_y = \frac{\sum_{i=1}^{n} A_i\, cy_{i}}{A}
+\end{align*}
+%\end{gather}
+where $A = \sum_{i=1}^{n} A_i$ is the total area.
+
+\noindent The principal moments of inertia of the overall system are obtained by first evaluating:
+%\begin{gather}
+\begin{align*}
+	J'_{xg} = J_x - A\, g_y^2, \qquad
+	J'_{yg} = J_y - A\, g_x^2, \qquad
+	J'_{xyg} = J_{xy} - A\, g_x\, g_y,
+\end{align*}
+%\end{gather}
+and then computing:
+%\begin{gather}
+\begin{align*}
+	J_\xi &= \tfrac{1}{2}
+	\left(
+	(J'_{xg} + J'_{yg})
+	- \sqrt{(J'_{xg} - J'_{yg})^2 + 4(J'_{xyg})^2}\,
+	\right), \\%[4pt]
+	J_\eta &= \tfrac{1}{2}
+	\left(
+	(J'_{xg} + J'_{yg})
+	+ \sqrt{(J'_{xg} - J'_{yg})^2 + 4(J'_{xyg})^2}\,
+	\right).
+\end{align*}
+%\end{gather}
+
+\noindent Layouts that provide good stability for the workpiece are those maximizing the sum:
+
+\begin{equation}
+	\finer = J_\xi + J_\eta
+	\label{eq:finer}
+\end{equation}
+

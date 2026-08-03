@@ -37,7 +37,7 @@ public class EODoorPorthole {
             throw new RuntimeException(e);
         }
 
-        Door door = new Door();
+        DoorPorthole door = new DoorPorthole();
 
         NoOverlapConstraint noOverlapConstraint = new NoOverlapConstraint(door.getHoles());
         GeometryConstraint geometryConstraint = new GeometryConstraint(door.getInequalities(), door.getVertices().stream().toList(),

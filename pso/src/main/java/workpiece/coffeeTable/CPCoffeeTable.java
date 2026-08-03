@@ -25,7 +25,7 @@ import java.util.*;
 
 public class CPCoffeeTable {
 
-    private static final String CP_FILE_PATH = "./resources/cp/cp_model_coffee_table_gecode.json";
+    private static final String CP_FILE_PATH = "./resources/cp/cp_model_coffee_table_chuffed.json";
     private static final String RESULT_FILE_PATH = "./resources/pso/pso_cp_coffee_table.json";
 
     public static void main(String[] args) {

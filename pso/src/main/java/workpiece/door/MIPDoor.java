@@ -25,7 +25,7 @@ import java.util.List;
 public class MIPDoor {
 
     private static final String MIP_FILE_PATH = "./resources/mip/mip_model_door_gurobi.json";
-    private static final String RESULT_FILE_PATH = "./resources/pso/pso_cp_door.json";
+    private static final String RESULT_FILE_PATH = "./resources/pso/pso_mip_door.json";
 
 
     public static void main(String[] args) {

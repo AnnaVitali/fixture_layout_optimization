@@ -2,16 +2,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 import re
+import matplotlib as mpl
+from matplotlib.lines import Line2D
 
+# Use standard matplotlib colors
+colors_tab10 = plt.cm.tab10(np.linspace(0, 1, 10))
 
-BAR_GRAY_DARK = "#4d4d4d"
-BAR_GRAY_MEDIUM = "#8c8c8c"
-BAR_GRAY_LIGHT = "#c7c7c7"
-ACCENT_GRAY = "#1f1f1f"
-
-WORKPIECE_LABEL_FONTSIZE = 12
-PERCENTAGE_LABEL_FONTSIZE = 9
-
+WORKPIECE_LABEL_FONTSIZE = 11
+PERCENTAGE_LABEL_FONTSIZE = 8
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REPORT_FILE = PROJECT_ROOT / "solutions" / "reports" / "inertia_reports.txt"
@@ -87,11 +85,13 @@ def main():
     data = parse_inertia_report(REPORT_FILE)
     
     workpiece_names_mapped = {
-        "spiral_stair_step": "Stair step spiral staircase",
-        "simple_stair_step": "Stair step simple staircase",
+        "spiral_stair_step": "Stair step\nspiral",
+        "simple_stair_step": "Stair step\nsimple",
         "speaker": "Speaker",
         "dashboard": "Dashboard",
-        "coffee_table": "Coffee Table"
+        "coffee_table": "Coffee table",
+        "door": "Door",
+        "door_porthole": "Door\nporthole"
     }
     
     workpieces_display = list(workpiece_names_mapped.values())
@@ -99,47 +99,73 @@ def main():
     
     cp_raw = []
     mip_raw = []
+    rl_raw = []
     cp_pso_raw = []
     mip_pso_raw = []
+    rl_pso_raw = []
     eo_pso_raw = []
     expert_raw = []
     
     for wp_key in workpieces_keys:
-        # Best CP (all solvers, including LNS CP)
+        # Best CP (max of all CP variants: chuffed, cp-sat, gecode, lns)
         cp_providers = [
             p for p in data.get(wp_key, {}).keys()
-            if p.startswith("cp_model") or p.startswith("LNS_cp_model")
+            if p in ['cp_model_chuffed', 'cp_model_cp-sat', 'cp_model_gecode', 'LNS_cp_model_gecode']
         ]
         cp_val = get_best_value(data, wp_key, cp_providers)
-        cp_raw.append(cp_val if cp_val else None)
+        cp_raw.append(cp_val)
         
-        # Best MIP
-        mip_val = get_best_value(data, wp_key, [p for p in data.get(wp_key, {}).keys() if p.startswith("mip_model") and "pso" not in p])
-        mip_raw.append(mip_val if mip_val else None)
+        # MIP (gurobi only)
+        mip_val = data.get(wp_key, {}).get('mip_model_gurobi', None)
+        mip_raw.append(mip_val)
         
-        # CP + PSO
-        cp_pso_val = data.get(wp_key, {}).get("cp_pso", None)
+        # RL
+        rl_val = data.get(wp_key, {}).get('rl', None)
+        rl_raw.append(rl_val)
+        
+        # PSO variants
+        cp_pso_val = data.get(wp_key, {}).get('pso_cp_pso', None)
         cp_pso_raw.append(cp_pso_val)
         
-        # MIP + PSO
-        mip_pso_val = data.get(wp_key, {}).get("mip_pso", None)
+        mip_pso_val = data.get(wp_key, {}).get('pso_mip_pso', None)
         mip_pso_raw.append(mip_pso_val)
         
-        # EO + PSO
-        eo_pso_val = data.get(wp_key, {}).get("pso_eo_pso", None)
+        rl_pso_val = data.get(wp_key, {}).get('pso_rl_pso', None)
+        rl_pso_raw.append(rl_pso_val)
+        
+        eo_pso_val = data.get(wp_key, {}).get('pso_eo_pso', None)
         eo_pso_raw.append(eo_pso_val)
         
         # Expert Operator
-        expert_val = data.get(wp_key, {}).get("expert_operator", None)
+        expert_val = data.get(wp_key, {}).get('expert_operator', None)
         expert_raw.append(expert_val)
     
     impr_cp = compute_improvement(cp_raw, expert_raw)
     impr_mip = compute_improvement(mip_raw, expert_raw)
+    impr_rl = compute_improvement(rl_raw, expert_raw)
     impr_cp_pso = compute_improvement(cp_pso_raw, expert_raw)
     impr_mip_pso = compute_improvement(mip_pso_raw, expert_raw)
+    impr_rl_pso = compute_improvement(rl_pso_raw, expert_raw)
     impr_eo_pso = compute_improvement(eo_pso_raw, expert_raw)
     
-    all_improvements = [v for v in impr_cp + impr_mip + impr_cp_pso + impr_mip_pso + impr_eo_pso if v is not None]
+    # Compute average differences between RL and CP/MIP for first plot
+    rl_vs_cp_diffs = [rl - cp if (rl is not None and cp is not None) else None 
+                      for rl, cp in zip(impr_rl, impr_cp)]
+    rl_vs_mip_diffs = [rl - mip if (rl is not None and mip is not None) else None 
+                       for rl, mip in zip(impr_rl, impr_mip)]
+    
+    rl_vs_cp_valid = [v for v in rl_vs_cp_diffs if v is not None]
+    rl_vs_mip_valid = [v for v in rl_vs_mip_diffs if v is not None]
+    
+    avg_rl_vs_cp = np.mean(rl_vs_cp_valid) if rl_vs_cp_valid else 0
+    avg_rl_vs_mip = np.mean(rl_vs_mip_valid) if rl_vs_mip_valid else 0
+    
+    print(f"\n=== Average Differences (First Plot - Overall) ===")
+    print(f"RL vs CP: {avg_rl_vs_cp:+.2f}% (RL is {abs(avg_rl_vs_cp):.2f}% {'better' if avg_rl_vs_cp > 0 else 'worse'})")
+    print(f"RL vs MIP: {avg_rl_vs_mip:+.2f}% (RL is {abs(avg_rl_vs_mip):.2f}% {'better' if avg_rl_vs_mip > 0 else 'worse'})")
+    print()
+    
+    all_improvements = [v for v in impr_cp + impr_mip + impr_rl + impr_cp_pso + impr_mip_pso + impr_rl_pso + impr_eo_pso if v is not None]
     y_min = min(all_improvements) if all_improvements else 0
     y_max = max(all_improvements) if all_improvements else 0
     
@@ -148,34 +174,52 @@ def main():
     y_max += y_range * 0.1
     
     x = np.arange(len(workpieces_display))
-    width = 0.25
+    width = 0.2
     
-    plt.figure(figsize=(16, 6))
+    # Define colors for each solver (Wong 8-Color Palette - colorblind friendly)
+    color_cp = '#56B4E9'      # Sky blue
+    color_mip = '#E69F00'     # Orange
+    color_rl = '#D55E00'      # Vermillion
+    color_eo = '#009E73'      # Bluish green
+    
+    fig = plt.figure(figsize=(22, 6))
+    
+    # Plot 1: Without PSO (CP, MIP, RL)
     plt.subplot(1, 2, 1)
     
     impr_cp_masked = [v if v is not None else np.nan for v in impr_cp]
     impr_mip_masked = [v if v is not None else np.nan for v in impr_mip]
+    impr_rl_masked = [v if v is not None else np.nan for v in impr_rl]
     
     bars1 = plt.bar(
-        x - width/2,
+        x - width,
         impr_cp_masked,
         width,
-        label="CP Model",
-        color=BAR_GRAY_DARK,
+        label="CP",
+        color=color_cp,
         edgecolor="black",
         linewidth=0.7,
     )
     bars2 = plt.bar(
-        x + width/2,
+        x,
         impr_mip_masked,
         width,
-        label="MIP Model",
-        color=BAR_GRAY_LIGHT,
+        label="MIP",
+        color=color_mip,
+        edgecolor="black",
+        linewidth=0.7,
+    )
+    bars3 = plt.bar(
+        x + width,
+        impr_rl_masked,
+        width,
+        label="RL",
+        color=color_rl,
         edgecolor="black",
         linewidth=0.7,
     )
     
-    for bars in [bars1, bars2]:
+    for bars in [bars1, bars2, bars3]:
         for bar in bars:
             h = bar.get_height()
             
@@ -199,59 +243,62 @@ def main():
                 fontsize=PERCENTAGE_LABEL_FONTSIZE
             )
     
-    plt.axhline(y=0, color=ACCENT_GRAY, linestyle=':', linewidth=2.0)
-    plt.text(
-        0.02,
-        0.04,
-        "expert operator solution",
-        transform=plt.gca().transAxes,
-        color=ACCENT_GRAY,
-        fontsize=9,
-        fontweight="bold",
-        alpha=0.7
-    )
-    plt.xticks(x, workpieces_display, rotation=20, fontsize=WORKPIECE_LABEL_FONTSIZE)
+    plt.axhline(y=0, color='black', linestyle=':', linewidth=2.0)
+    plt.xticks(x, workpieces_display, rotation=0, fontsize=WORKPIECE_LABEL_FONTSIZE)
     plt.ylabel("Improvement (%)")
     plt.title("Without PSO")
-    plt.legend()
+    handles, labels = plt.gca().get_legend_handles_labels()
+    baseline_line = Line2D([0], [0], color='black', linestyle=':', linewidth=2.0, label='Expert Operator')
+    plt.legend(handles + [baseline_line], labels + ['Expert Operator'], loc='upper left')
     plt.grid(axis='y', linestyle='--', alpha=0.4)
     plt.ylim(y_min, y_max)
     
+    # Plot 2: PSO Solutions (simple bars, improvement vs EO)
     plt.subplot(1, 2, 2)
     
     impr_cp_pso_masked = [v if v is not None else np.nan for v in impr_cp_pso]
     impr_mip_pso_masked = [v if v is not None else np.nan for v in impr_mip_pso]
+    impr_rl_pso_masked = [v if v is not None else np.nan for v in impr_rl_pso]
     impr_eo_pso_masked = [v if v is not None else np.nan for v in impr_eo_pso]
     
-    bars3 = plt.bar(
-        x - width,
+    bars4 = plt.bar(
+        x - width*1.5,
         impr_cp_pso_masked,
         width,
         label="CP + PSO",
-        color=BAR_GRAY_DARK,
-        edgecolor="black",
-        linewidth=0.7,
-    )
-    bars4 = plt.bar(
-        x,
-        impr_mip_pso_masked,
-        width,
-        label="MIP + PSO",
-        color=BAR_GRAY_MEDIUM,
+        color=color_cp,
         edgecolor="black",
         linewidth=0.7,
     )
     bars5 = plt.bar(
-        x + width,
+        x - width*0.5,
+        impr_mip_pso_masked,
+        width,
+        label="MIP + PSO",
+        color=color_mip,
+        edgecolor="black",
+        linewidth=0.7,
+    )
+    bars6 = plt.bar(
+        x + width*0.5,
+        impr_rl_pso_masked,
+        width,
+        label="RL + PSO",
+        color=color_rl,
+        edgecolor="black",
+        linewidth=0.7,
+    )
+    bars7 = plt.bar(
+        x + width*1.5,
         impr_eo_pso_masked,
         width,
         label="EO + PSO",
-        color=BAR_GRAY_LIGHT,
+        color=color_eo,
         edgecolor="black",
         linewidth=0.7,
     )
     
-    for bars in [bars3, bars4, bars5]:
+    for bars in [bars4, bars5, bars6, bars7]:
         for bar in bars:
             h = bar.get_height()
             
@@ -275,20 +322,13 @@ def main():
                 fontsize=PERCENTAGE_LABEL_FONTSIZE
             )
     
-    plt.axhline(y=0, color=ACCENT_GRAY, linestyle=':', linewidth=2.0)
-    plt.text(
-        0.02,
-        0.04,
-        "expert operator solution",
-        transform=plt.gca().transAxes,
-        color=ACCENT_GRAY,
-        fontsize=9,
-        fontweight="bold",
-        alpha=0.7
-    )
-    plt.xticks(x, workpieces_display, rotation=20, fontsize=WORKPIECE_LABEL_FONTSIZE)
-    plt.title("With PSO (vs Expert Operator)")
-    plt.legend()
+    plt.axhline(y=0, color='black', linestyle=':', linewidth=2.0)
+    plt.xticks(x, workpieces_display, rotation=0, fontsize=WORKPIECE_LABEL_FONTSIZE)
+    plt.ylabel("Improvement (%)")
+    plt.title("With PSO integration")
+    handles, labels = plt.gca().get_legend_handles_labels()
+    baseline_line = Line2D([0], [0], color='black', linestyle=':', linewidth=2.0, label='Expert Operator')
+    plt.legend(handles + [baseline_line], labels + ['Expert Operator'], loc='upper left')
     plt.grid(axis='y', linestyle='--', alpha=0.4)
     plt.ylim(y_min, y_max)
     
@@ -298,9 +338,8 @@ def main():
     output_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
     print(f"Plot saved to: {output_path}")
-    
-    plt.show()
 
 
 if __name__ == "__main__":
     main()
+    

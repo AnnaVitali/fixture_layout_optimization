@@ -1,0 +1,90 @@
+\label{sec:mip_model}
+
+In this section, we present the Mixed-Integer Programming (MIP) formulation for the fixture layout optimization problem. Unlike the CP model, the MIP formulation does not rely on global constraints. Instead, it represents the problem as a system of linear constraints over continuous and binary decision variables. This
+relaxation comes from the nature of MIP solving which, unlike most CP solvers, naturally handles
+non-negative continuous variables.
+
+
+\subsection{Variables}
+Variables \(x_i\) and \(y_i\), for \(i=1,\dots,\nmax\), have the same semantics as those defined in Section~\ref{sec:cp_vars}, with the only difference that they are continuous rather than discrete.
+
+Fixture types are encoded by a binary matrix \(T\) of size \(\nmax \times \ntypes\), where
+
+\[
+T_{i,j} =
+\begin{cases}
+	1 & \text{if fixture \(i\) is selected and has type \(j\),}\\
+	0 & \text{otherwise.}
+\end{cases}
+\]
+
+To represent the width, height, and type of each fixture, auxiliary variables \(w_i\), \(h_i\), and \(t_i\) are introduced for each \(i \in [1 \ldots \nmax]\).
+
+To linearize the constraints presented in Section~\ref{sec:cp_cons}, the following auxiliary binary variables are defined:
+
+\begin{itemize}
+	\item \(\used_i\), which indicates whether fixture \(i\) is selected;
+	\item \(\samebar_{i,j}\), which indicates whether fixtures \(i\) and \(j\) are placed on the same bar;
+	\item \(\aboveinbar_{i,j}\) and \(\belowinbar_{i,j}\), which indicate whether fixture \(i\) is positioned above or below fixture \(j\) on the same bar;
+	\item \(\nooverlapabove_{i,j}\), \(\nooverlapbelow_{i,j}\), \(\nooverlapleft_{i,j}\), and \(\nooverlapright_{i,j}\), which indicate whether fixture \(i\) is positioned above, below, to the left, or to the right of fixture \(j\), respectively;
+	\item \(\aboveext_{i,j}\), \(\belowext_{i,j}\), \(\leftext_{i,j}\), and \(\rightext_{i,j}\), which indicate whether fixture \(i\) is positioned above, below, to the left, or to the right of extrusion area \(j\), respectively.
+\end{itemize}
+
+
+\subsection{Constraints}
+For each fixture \(i \in [1..\nmax]\), the following equations are imposed:
+
+\[
+\used_i = \sum_{j=1}^{\ntypes} T_{i,j}, \qquad
+w_i = \sum_{j=1}^{\ntypes} \wfix_j \cdot T_{i,j}, \qquad
+h_i = \sum_{j=1}^{\ntypes} \hfix_j \cdot T_{i,j}, \qquad
+t_i = \sum_{j=1}^{\ntypes} j \cdot T_{i,j}.
+\]
+
+These equations ensure that the width, height, and type assigned to each fixture are consistent and that unused fixtures have dimensions and type equal to \(0\).
+
+To respect fixtures availability constraints, we impose:
+\[
+\sum_{i=1}^{\nmax} T_{i,j} \le \nfix_j, \quad \forall j \in [1..\ntypes] \qquad\qquad
+\nmin \le \sum_{i=1}^{\nmax} \used_i \le \nmax
+\]
+
+To determine whether two fixtures lie on the same bar for all \(i \in [1..\nmax]\) and \(j \in [i+1..\nmax]\) we impose the following constraints:
+\[
+\begin{aligned}
+	&\samebar_{i,j} \le \used_i \qquad \samebar_{i,j} \le \used_j \\
+	&\samebar_{i,j} = \aboveinbar_{i,j} + \belowinbar_{i,j}\\
+	&cx_i - cx_j \le M (1 - \samebar_{i,j}) \qquad cx_j - cx_i \le M (1 - \samebar_{i,j}) \\
+\end{aligned}
+\]
+
+where \(M = \wtab \cdot \htab\) is the \emph{``big-M''} constant. Then to enforce the appropriate safety distances we use the following inequalities:
+\[
+\begin{aligned}
+	&cx_i + \wmin \le cx_j + M(\samebar_{i,j} + \nooverlapright_{i,j}) \\
+	&cx_j + \wmin \le cx_i + M(\samebar_{i,j} + \nooverlapleft_{i,j}) \\
+	&y_i + h_i + \hmin - y_j \le M (1 - \aboveinbar_{i,j}) \\
+	&y_j + h_j + \hmin - y_i \le M (1 - \belowinbar_{i,j}).
+\end{aligned}
+\]
+
+To prevent overlap between fixtures, for all \(i,j \in [1..\nmax]\) with \(i < j\), we impose:
+\[
+\begin{aligned}
+	&\nooverlapabove_{i,j} + \nooverlapbelow_{i,j} +
+	\nooverlapleft_{i,j} + \nooverlapright_{i,j} \ge 1 \\
+	&x_i + w_i \le x_j + M (1 - \nooverlapleft_{i,j}) \qquad
+	&y_i + h_i \le y_j + M (1 - \nooverlapbelow_{i,j}) \\
+	&x_j + w_j \le x_i + M (1 - \nooverlapright_{i,j}) \qquad
+	&y_j + h_j \le y_i + M (1 - \nooverlapabove_{i,j})
+\end{aligned}
+\]
+Analogous constraints are introduced to prevent overlap between fixtures and extrusion areas. For each fixture \(i \in [1..\nmax]\) and extrusion area \(j \in [1..\numext]\), the same inequalities are applied using the binary variables \(\aboveext_{i,j}\), \(\belowext_{i,j}\), \(\leftext_{i,j}\), and \(\rightext_{i,j}\).
+
+The workpiece is defined by linear inequalities of the form $\mathtt{a}x + \mathtt{b}y + \mathtt{c} \leq 0$, so for each fixture \(i \in [1..\nmax]\) we impose \(\mathtt{a}\,x'_i + \mathtt{b}\,y'_i + \mathtt{c} \leq 0\), where \(x'_i\) and \(y'_i\) are defined as in the CP model (see Section~\ref{sec:cp_cons}).
+
+To break symmetries, we enforce an ordering on fixture types: $t_i \ge t_{i+1}$ for $i \in [1..\nmax-1]$.
+
+Finally, the absolute value terms appearing in \(\fdist\) are linearized using a big-\(M\) formulation, unfolding each term of the form \(u=|v|\) into: 
+
+$$u \ge v ~\wedge~ u \ge -v ~\wedge~ u \leq v + M (1 - b)  ~\wedge~ u \leq -v + M b~\wedge~ b\in\{0,1\}.$$

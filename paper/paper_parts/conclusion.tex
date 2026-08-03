@@ -1,0 +1,13 @@
+\label{sec:conclusions}
+This paper presented a comparative study of different solution strategies for the fixture layout optimization problem in wood industry.
+
+The problem was first addressed through Constraint Programming (CP) and Mixed Integer Programming (MIP) models, whose performance was compared with that of a Q-learning-based algorithm. The experimental results showed that the CP formulation generally provides the best layouts in terms of the moment of inertia objective, with the $\lns$ solver consistently generating feasible solutions even for the most challenging instances, where other CP solvers fail.
+
+Since the CP, MIP, and Q-learning approaches do not explicitly account for fixture rotations, their solutions were subsequently refined through a Particle Swarm Optimization (PSO) meta-heuristic, which treats fixture rotation as an additional decision variable, thereby addressing the complete optimization problem.
+
+Among the considered approaches, the CP model refined by PSO provides the best trade-off between computational time and solution quality. Although the Q-learning algorithm does not always outperform the layouts proposed by the expert operator, its integration with PSO significantly improves the obtained solutions, surpassing the expert layouts for all the tested workpieces except the coffee table, for which the initial Q-learning solution was the weakest.
+
+PSO also proves effective when initialized directly from the expert operator's layout, consistently improving the proposed solutions. This demonstrates its potential as a practical standalone refinement tool that can assist operators in further enhancing manually designed fixture layouts.
+
+Future work may be focus on extending the proposed models to simultaneously optimize the fixture layouts of multiple workpieces on the machine worktable, as well as investigating alternative meta-heuristic and learning-based refinement strategies.
+

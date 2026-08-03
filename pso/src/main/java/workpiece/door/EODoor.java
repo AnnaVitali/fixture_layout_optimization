@@ -25,7 +25,7 @@ import java.util.List;
 public class EODoor {
 
     private static final String EO_FILE_PATH = "./resources/expert/expert_operator_door.json";
-    private static final String RESULT_FILE_PATH = "./resources/pso/pso_cp_door.json";
+    private static final String RESULT_FILE_PATH = "./resources/pso/pso_eo_door.json";
 
 
     public static void main(String[] args) {

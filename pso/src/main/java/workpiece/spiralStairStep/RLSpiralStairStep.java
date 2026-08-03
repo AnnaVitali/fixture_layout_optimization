@@ -26,7 +26,7 @@ import java.util.List;
 public class RLSpiralStairStep {
 
     private static final String RL_FILE_PATH = "./resources/rl/rl_spiral_stair_step.json";
-    private static final String RESULT_FILE_PATH = "./resources/pso/rl_spiral_stair_step.json";
+    private static final String RESULT_FILE_PATH = "./resources/pso/pso_rl_spiral_stair_step.json";
 
 
     public static void main(String[] args) {

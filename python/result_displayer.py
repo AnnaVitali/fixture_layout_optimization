@@ -118,6 +118,7 @@ class ResultDisplayer:
         print(f"Principal Moment I: {j_xg:.5e}")
         print(f"Principal moment J: {j_yg:.5e}")
         print(f"I + J: {abs(j_xg) + abs(j_yg):.5e}")
+        #print(f"I + J: {j_xg + j_yg:.5e}")
 
 
         plt.figure(figsize=(8, 6))
@@ -200,10 +201,11 @@ class ResultDisplayer:
             plt.scatter(barycenter_x, barycenter_y, color='green', zorder=5)
             plt.text(barycenter_x + 5, barycenter_y + 5, f"c{idx + 1}", color="green", fontsize=10)
 
-        plt.xlabel("X-coordinate")
-        plt.ylabel("Y-coordinate")
+        plt.xlabel("")
+        plt.ylabel("")
+        plt.xticks([])
+        plt.yticks([])
         plt.grid(True)
-        plt.tight_layout()
         plt.gca().set_aspect('equal', adjustable='box')
         
         provider = self._extract_provider(file_path)
@@ -212,4 +214,4 @@ class ResultDisplayer:
         output_dir = Path(IMAGE_OUTPUT_DIR)
         output_dir.mkdir(parents=True, exist_ok=True)
         #plt.show()
-        plt.savefig(output_dir / filename)
+        plt.savefig(output_dir / filename, bbox_inches='tight', pad_inches=0.02, dpi=150)

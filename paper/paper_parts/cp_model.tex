@@ -1,0 +1,117 @@
+\label{sec:cp_model}
+
+The CP model extends the formulation presented in~\cite{vitali2026constraint} through a revised definition of the decision variables and a reformulation of some constraints, resulting in improved resolution times on the tested instances. The model is defined over the parameters introduced in Section~\ref{sec:problem_description} and maximizes the objective function $\fdist$ defined in Equation~\ref{eq:f_dist}.
+
+\subsection{Variables}
+\label{sec:cp_vars}
+
+The fixture placement and type are represented by three arrays of integer decision variables, $x$, $y$, and $t$, for $i = 1,\ldots,\nmax$:
+\begin{itemize}
+	\item \( (x_i,y_i) \in [0..\wtab]\times [0..\htab] \) denotes the coordinates of the lower-left corner of the $i$-th fixture;
+	\item \( t_i \in [0..\ntypes] \) denotes the type of the $i$-th fixture, where type $0$ represents an unused fixture.
+\end{itemize}
+
+For each fixture type \(i \in [1..\ntypes]\), an integer variable \(n_i \in [0..\nfix_i]\) denotes the number of selected fixtures of type \(i\), and a variable \(n \in [\nmin..\nmax]\) represents the total number of selected fixtures.
+
+Compared with the formulation presented in~\cite{vitali2026constraint}, the arrays \(x\) and \(y\) and the variable \(n\) are now bounded by \(\nmax\), rather than by \(\nfix\), since the maximum number of fixtures that can be placed is known for each workpiece and $\nmax \leq \nfix$, this tighter bound reduces the search space.
+
+\subsection{Constraints}
+\label{sec:cp_cons}
+
+For each fixture type \(i \in [1..\ntypes]\), the \texttt{count} global constraint is used to compute the number of occurrences of value \(i\) in the array \(t\):
+
+\[
+n_i = \texttt{count}(t,i).
+\]
+
+The total number of selected fixtures is then defined as
+
+\[
+n = \sum_{i=1}^{\ntypes} n_i.
+\]
+
+Fixture availability is enforced by requiring that the number of selected fixtures of each type does not exceed the number available:
+
+\[
+n_i \leq \nfix_i, \qquad \forall i \in [1..\ntypes].
+\]
+
+Since not all available fixtures must necessarily be used, we enforce the following invariant:
+\[
+(i > n) \iff (x_i = \wtab \;\wedge\; y_i = \htab \;\wedge\; t_i = 0).
+\]
+
+This invariant ensures that all unused fixtures are assigned the dummy type \(0\) and placed at the dummy location \((\wtab,\htab)\), which lies outside the feasible region.
+
+We guarantee that exactly \(\nmax-n\) fixtures remain unused by imposing
+
+\[
+\texttt{count}(t,0) = \nmax - n.
+\]
+
+
+The workpiece shape is defined by linear inequalities of the form \( \mathtt{a}\,x + \mathtt{b}\,y + \mathtt{c} \leq 0 \).
+To ensure that each selected fixture \( i \) is placed within the workpiece, we must satisfy
+\(
+\mathtt{a}\,x'_i + \mathtt{b}\,y'_i + \mathtt{c} \leq 0,
+\)
+where:
+\[
+x'_i =
+\begin{cases}
+	x_i & \text{if } \mathtt{a} \leq 0,\\
+	x_i + \wfix_{t_i} & \text{if } \mathtt{a} > 0,
+\end{cases}
+\qquad
+y'_i =
+\begin{cases}
+	y_i & \text{if } \mathtt{b} \leq 0,\\
+	y_i + \hfix_{t_i} & \text{if } \mathtt{b} > 0.
+\end{cases}
+\]
+
+Areas to be extruded are approximated by axis-aligned rectangles. The non-overlap between these areas and the fixtures is enforced using the \texttt{diffn} global constraint~\cite{DBLP:journals/constraints/BeldiceanuCDP07}. Given a set of rectangles specified by their lower-left corner coordinates and dimensions, the \texttt{diffn} constraint ensures that no two rectangles overlap:
+\[
+\texttt{diffn}\big(
+x \oplus \xext,\;
+y \oplus \yext,\;
+[\wfix_{t_i} \mid i \in [1..n]] \oplus \ewside,\;
+[\hfix_{t_i} \mid i \in [1..n]] \oplus \ehside
+\big)
+\]
+where \( \oplus \) denotes array concatenation. Specifically, we use the non-strict version of \texttt{diffn}, in which zero-width rectangles can be positioned anywhere, ignoring the \( \nmax - n \) unused fixtures.
+
+To enforce the minimum \emph{vertical} distance \( \hmin \) between fixtures placed on the same bar, and the minimum \emph{horizontal} distance \( \wmin \) between fixtures placed on different bars we impose:
+\begin{equation*}
+	\forall 1 \le i < j \le n: \quad
+	\begin{cases}
+		y_i + \hfix_{t_i} + \hmin \le y_j
+		\;\vee\;
+		y_j + \hfix_{t_j} + \hmin \le y_i, & \text{if } cx_i = cx_j,\\[1ex]
+		x_i + \wfix_{t_i} + \wmin \le x_j, & \text{if } cx_i \neq cx_j.
+	\end{cases}
+\end{equation*}
+where
+\(cx_i\) denotes the $x$-coordinate of the centroid of fixture \( i \).
+Centroid coordinates are used instead of lower-left coordinates because fixtures may be wider than their supporting bar: while \( x_i \) may fall outside the horizontal span of the bar, the centroid \( cx_i \) always lies within it.
+
+To compute the fixture centroid coordinates while maintaining integer variables, they are computed using integer division of the fixture dimensions, for each fixture $i \in [1..\nmax]$, we define:
+
+\begin{equation}
+	cx_i = x_i + \left\lfloor \frac{\wfix_{t_i}}{2} \right\rfloor, \quad
+	cy_i = y_i + \left\lfloor \frac{\hfix_{t_i}}{2} \right\rfloor .
+\end{equation}
+
+To improve the propagation of the integer division, the following redundant linear constraints were introduced:
+
+\begin{align*}
+	2 \cdot cx_i - 2 \cdot x_i = \wfix_{t_i} - (\wfix_{t_i} \bmod 2), \\
+	2 \cdot cy_i - 2 \cdot y_i = \hfix_{t_i} - (\hfix_{t_i} \bmod 2).
+\end{align*}
+
+Finally, the model exhibits symmetries whenever fixtures of the same type are permuted without changing their spatial arrangement. To eliminate these equivalent solutions, a lexicographic ordering is imposed on the fixture positions using the \texttt{lex\_chain} global constraint:
+
+\[
+(x_{i-1},y_{i-1}) \preceq (x_i,y_i),
+\qquad i \in [2..\nmax].
+\]
