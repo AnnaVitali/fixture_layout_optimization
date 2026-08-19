@@ -135,22 +135,23 @@ def format_objective(value, is_max=False):
     return result
 
 
-def format_fdist(value, is_max=False, is_optimal=False):
-    """Format fdist value as integer with thousands separators."""
+def format_fdist(value, is_max=False, is_optimal=False, decimal_places=None):
+    """Format fdist; CP values as integers and MIP values with fixed decimals."""
     if value is None:
         return "--"
-    
-    result = f"{int(round(value)):,}"
-    
+
+    if decimal_places is None:
+        result = f"{int(round(value))}"
+    else:
+        result = f"{value:.{decimal_places}f}"
+
     if is_optimal:
         result += "{}^*"
-    
+
     if is_max:
         result = f"\\mathbf{{{result}}}"
-    
-    result = f"${result}$"
-    
-    return result
+
+    return f"${result}$"
 
 
 def format_finer(value):
@@ -230,12 +231,12 @@ def generate_simple_comparison_table(data, workpieces, solvers):
     lines.append("\\begin{table}[t]")
     lines.append("\t\\centering")
     lines.append("\t\\footnotesize")
-    lines.append("\t\\caption{Objective values $\\finer$ comparison: CP solvers (best among Gecode, LNS, Chuffed, OR-Tools), MIP solver (Gurobi), and RL approach. For each workpiece, the maximum value is highlighted in bold.}")
-    lines.append("\t\\label{tab:comparison_simple}")
+    lines.append("\t\\caption{Objective values $\\finer$ comparison: CP solvers (best among Gecode, LNS, Chuffed, OR-Tools) and MIP solver (Gurobi). For each workpiece, the maximum value is highlighted in bold.}")
+    lines.append("\t\\label{tab:comparison}")
     lines.append("\t\\setlength{\\tabcolsep}{5pt}")
-    lines.append("\t\\begin{tabular}{cccc}")
+    lines.append("\t\\begin{tabular}{ccc}")
     lines.append("\t\t\\toprule")
-    lines.append("\t\tWorkpiece & CP & MIP & RL \\\\")
+    lines.append("\t\tWorkpiece & CP model & MIP model " + "\\\\")
     lines.append("\t\t\\midrule")
     lines.append("")
     
@@ -257,16 +258,18 @@ def generate_simple_comparison_table(data, workpieces, solvers):
         cp_best = max(cp_values) if cp_values else None
         
         mip_best = data[workpiece]['gurobi']
-        rl_best = data[workpiece]['rl']
+        # rl_best = data[workpiece]['rl']  # Uncomment to include RL again
         
-        all_values = [v for v in [cp_best, mip_best, rl_best] if v is not None]
+        all_values = [v for v in [cp_best, mip_best] if v is not None]
+        # all_values = [v for v in [cp_best, mip_best, rl_best] if v is not None]  # RL version
         overall_best = max(all_values) if all_values else None
         
         cp_cell = f"${format_objective(cp_best, is_max=(cp_best == overall_best))}$" if cp_best else "--"
         mip_cell = f"${format_objective(mip_best, is_max=(mip_best == overall_best))}$" if mip_best else "--"
-        rl_cell = f"${format_objective(rl_best, is_max=(rl_best == overall_best))}$" if rl_best else "--"
+        # rl_cell = f"${format_objective(rl_best, is_max=(rl_best == overall_best))}$" if rl_best else "--"
         
-        row = f"\t\t\\makecell{{{display_name}}} & {cp_cell} & {mip_cell} & {rl_cell} \\\\"
+        row = f"\t\t\\makecell{{{display_name}}} & {cp_cell} & {mip_cell} \\\\"
+        # row = f"\t\t\\makecell{{{display_name}}} & {cp_cell} & {mip_cell} & {rl_cell} \\\\"  # RL version
         lines.append(row)
         if i < len(workpieces) - 1:
             lines.append("\t\t\\midrule")
@@ -289,11 +292,11 @@ def generate_detailed_comparison_table(data, workpieces, solvers):
     lines.append("\t\\centering")
     lines.append("\t\\renewcommand{\\arraystretch}{1.3}")
     lines.append("\t\\setlength{\\tabcolsep}{3pt}")
-    lines.append("\t\\caption{Objective values $\\finer$ comparison between the best CP model solution, the MIP solution and the Q-learning solution. For each workpiece, the maximum value is highlighted in bold.}")
-    lines.append("\t\\label{tab:cp_mip_rl_comparison}")
-    lines.append("\t\\begin{tabular}{c c c c}")
+    lines.append("\t\\caption{Objective values $\\finer$ comparison between the best CP model solution and the MIP solution. For each workpiece, the maximum value is highlighted in bold.}")
+    lines.append("\t\\label{tab:cp_mip_comparison}")
+    lines.append("\t\\begin{tabular}{c c c}")
     lines.append("\t\t\\hline")
-    lines.append("\t\t\\textbf{Workpiece} & \\textbf{CP} & \\textbf{MIP} & \\textbf{Q-learning} \\\\")
+    lines.append("\t\t\\textbf{Workpiece} & \\textbf{CP} & \\textbf{MIP} " + "\\\\")
     lines.append("\t\t\\hline")
     
     workpiece_display_names = {
@@ -315,19 +318,19 @@ def generate_detailed_comparison_table(data, workpieces, solvers):
         cp_best_solver = [s for s, v in cp_values.items() if v == cp_best][0] if cp_best else None
         
         mip_best = data[workpiece]['gurobi']
-        rl_best = data[workpiece]['rl']
+        # rl_best = data[workpiece]['rl']  # Uncomment to include RL again
         
         all_values = {
             'cp': cp_best,
             'mip': mip_best,
-            'rl': rl_best
+            # 'rl': rl_best,  # Uncomment to include RL again
         }
         all_values = {k: v for k, v in all_values.items() if v is not None}
         overall_best = max(all_values.values()) if all_values else None
         
         cp_is_best = cp_best == overall_best if cp_best else False
         mip_is_best = mip_best == overall_best if mip_best else False
-        rl_is_best = rl_best == overall_best if rl_best else False
+        # rl_is_best = rl_best == overall_best if rl_best else False
         
         if cp_best is not None:
             cp_formatted = format_objective(cp_best, is_max=cp_is_best)
@@ -356,21 +359,21 @@ def generate_detailed_comparison_table(data, workpieces, solvers):
         else:
             mip_cell = "--"
         
-        if rl_best is not None:
-            rl_formatted = format_objective(rl_best, is_max=rl_is_best)
-            img_file = copy_image_to_paper_dir(workpiece, 'rl')
-            if img_file:
-                rl_cell = f"\\makecell{{${rl_formatted}$ \\\\ \\includegraphics[width=0.20\\linewidth]{{img/{img_file}}}}}"
-            else:
-                rl_cell = f"\\makecell{{${rl_formatted}$}}"
-        else:
-            rl_cell = "--"
-        
+#         if rl_best is not None:
+#             rl_formatted = format_objective(rl_best, is_max=rl_is_best)
+#             img_file = copy_image_to_paper_dir(workpiece, 'rl')
+#             if img_file:
+#                 rl_cell = f"\\makecell{{${rl_formatted}$ \\\\ \\includegraphics[width=0.20\\linewidth]{{img/{img_file}}}}}"
+#             else:
+#                 rl_cell = f"\\makecell{{${rl_formatted}$}}"
+#         else:
+#             rl_cell = "--"        
         workpiece_cell = f"\\multirow{{2}}{{*}}{{\\makecell{{{display_name}}}}}"
         row = f"\t\t{workpiece_cell}"
         row += f"\n\t\t& {cp_cell}"
         row += f"\n\t\t& {mip_cell}"
-        row += f"\n\t\t& {rl_cell} \\\\"
+        # row += f"\n\t\t& {rl_cell} \\"  # Uncomment for RL column
+        row += " \\"
         lines.append(row)
         lines.append("\t\t\\hline")
         lines.append("")
@@ -386,14 +389,14 @@ def generate_unified_objective_runtime_table(fdist_data, finer_data, solve_time_
     max_finer = find_max_values(finer_data, workpieces, solvers)
     
     lines = []
-    lines.append("\\begin{table}[t]")
-    lines.append("    \\centering")
-    lines.append("    \\footnotesize")
-    lines.append("    \\caption{Objective values for $\\fdist$ and $\\finer$, and solve times. Solutions where the solver reached optimality (runtime $< 300$ s) are marked with $^*$. For each workpiece, the maximum values of $\\fdist$ and $\\finer$ are highlighted in bold, including ties.}")
-    lines.append("    \\label{tab:objective_runtime}")
-    lines.append("    \\setlength{\\tabcolsep}{2pt}")
-    lines.append("    \\begin{tabular}{llccccc}")
-    lines.append("        \\toprule")
+    lines.append("\\begin{table}[!b]")
+    lines.append("\t\\centering")
+    lines.append("\t\\footnotesize")
+    lines.append("\t\\caption{Objective values for $\\fdist$ and $\\finer$, and solve time $t_{solve}$ in seconds to reach the best $\\fdist$ solution. Timeout (300~s) is indicated by ``--''. Solutions where the solver reached optimality are marked with $^*$. For each workpiece, the maximum values of $\\fdist$ and $\\finer$ are highlighted in bold, including ties.}")
+    lines.append("\t\\label{tab:objective_runtime}")
+    lines.append("\t\\setlength{\\tabcolsep}{2pt}")
+    lines.append("\t\\begin{tabular}{llccccc}")
+    lines.append("\t\t\\toprule")
     
     solver_display_names = {
         'gecode': 'Gecode',
@@ -403,9 +406,9 @@ def generate_unified_objective_runtime_table(fdist_data, finer_data, solve_time_
         'gurobi': 'Gurobi'
     }
     
-    header = "        Workpiece & Metric & " + " & ".join([solver_display_names.get(s, s) for s in solvers]) + " \\\\"
+    header = "\t\tWorkpiece & Metric & " + " & ".join([solver_display_names.get(s, s) for s in solvers]) + " \\\\"
     lines.append(header)
-    lines.append("        \\midrule")
+    lines.append("\t\t\\midrule")
     lines.append("")
     
     workpiece_display_names = {
@@ -428,10 +431,10 @@ def generate_unified_objective_runtime_table(fdist_data, finer_data, solve_time_
             value = fdist_data[workpiece][solver]
             is_max = value == max_fdist[workpiece]
             reached_optimality = not timeout_data[workpiece][solver] if solver in timeout_data[workpiece] else True
-            formatted = format_fdist(value, is_max=is_max, is_optimal=reached_optimality)
+            formatted = format_fdist(value, is_max=is_max, is_optimal=reached_optimality, decimal_places=3 if solver == 'gurobi' else None)
             fdist_values.append(formatted)
         
-        fdist_row = f"        {workpiece_cell} & $\\fdist$ & " + " & ".join(fdist_values) + " \\\\"
+        fdist_row = f"\t\t{workpiece_cell} & $\\fdist$ & " + " & ".join(fdist_values) + " \\\\"
         lines.append(fdist_row)
         
         finer_values = []
@@ -462,15 +465,15 @@ def generate_unified_objective_runtime_table(fdist_data, finer_data, solve_time_
                 formatted = format_solve_time(value)
             solve_time_values.append(formatted)
         
-        solve_time_row = "        & $t$ (s) & " + " & ".join(solve_time_values) + " \\\\"
+        solve_time_row = "\t\t& $t_{solve}$ & " + " & ".join(solve_time_values) + " \\\\"
         lines.append(solve_time_row)
         
         if i < len(workpieces) - 1:
-            lines.append("        \\midrule")
+            lines.append("\t\t\\midrule")
         lines.append("")
     
-    lines.append("        \\bottomrule")
-    lines.append("    \\end{tabular}")
+    lines.append("\t\t\\bottomrule")
+    lines.append("\t\\end{tabular}")
     lines.append("\\end{table}")
     
     return "\n".join(lines)
@@ -500,7 +503,7 @@ def generate_objective_table(fdist_data, finer_data, timeout_data, workpieces, s
     
     header = "        Workpiece & Obj. & " + " & ".join([solver_display_names.get(s, s) for s in solvers]) + " \\\\"
     lines.append(header)
-    lines.append("        \\midrule")
+    lines.append("\t\t\\midrule")
     lines.append("")
     
     workpiece_display_names = {
@@ -523,7 +526,7 @@ def generate_objective_table(fdist_data, finer_data, timeout_data, workpieces, s
             value = fdist_data[workpiece][solver]
             is_max = value == max_fdist[workpiece]
             reached_optimality = not timeout_data[workpiece][solver]
-            formatted = format_fdist(value, is_max=is_max, is_optimal=reached_optimality)
+            formatted = format_fdist(value, is_max=is_max, is_optimal=reached_optimality, decimal_places=3 if solver == 'gurobi' else None)
             fdist_values.append(formatted)
         
         fdist_row = f"        {workpiece_cell} & $\\fdist$ & " + " & ".join(fdist_values) + " \\\\"
@@ -549,11 +552,11 @@ def generate_objective_table(fdist_data, finer_data, timeout_data, workpieces, s
         lines.append(finer_row)
         
         if i < len(workpieces) - 1:
-            lines.append("        \\midrule")
+            lines.append("\t\t\\midrule")
         lines.append("")
     
-    lines.append("        \\bottomrule")
-    lines.append("    \\end{tabular}")
+    lines.append("\t\t\\bottomrule")
+    lines.append("\t\\end{tabular}")
     lines.append("\\end{table}")
     
     return "\n".join(lines)
@@ -580,7 +583,7 @@ def generate_runtime_table(solve_time_data, workpieces, solvers):
     
     header = "        Workpiece & " + " & ".join([solver_display_names.get(s, s) for s in solvers]) + " \\\\"
     lines.append(header)
-    lines.append("        \\midrule")
+    lines.append("\t\t\\midrule")
     lines.append("")
     
     workpiece_display_names = {
@@ -611,8 +614,8 @@ def generate_runtime_table(solve_time_data, workpieces, solvers):
             lines.append("")
     
     lines.append("")
-    lines.append("        \\bottomrule")
-    lines.append("    \\end{tabular}")
+    lines.append("\t\t\\bottomrule")
+    lines.append("\t\\end{tabular}")
     lines.append("\\end{table}")
     
     return "\n".join(lines)
@@ -620,16 +623,16 @@ def generate_runtime_table(solve_time_data, workpieces, solvers):
 
 def generate_best_solutions_table(data, provider_map, workpieces):
     lines = []
-    lines.append("\\begin{table}[t]")
+    lines.append("\\begin{table}[!t]")
     lines.append("\t\\centering")
     lines.append("\t\\renewcommand{\\arraystretch}{1.3}")
     lines.append("\t\\setlength{\\tabcolsep}{3pt}")
     lines.append("\t\\caption{Summary of the best solutions, corresponding solution providers, and moment of inertia values for the different workpieces. ")
     lines.append("\t\tThe workpiece perimeter is shown with solid lines. Dashed lines indicate extrusion areas, fixture regions are marked with diagonal hatching, and supporting bars are shown as shaded rectangles.}")
-    lines.append("\t\\label{tab:best_solutions}")
-    lines.append("\t\\begin{tabular}{c c c c c}")
+    lines.append("\t\\label{tab:visual_results}")
+    lines.append("\t\\begin{tabular}{c c c c}")
     lines.append("\t\t\\hline")
-    lines.append("\t\t\\textbf{Workpiece} & \\textbf{Expert Operator} & \\textbf{Best CP/MIP} & \\textbf{Best RL} & \\textbf{Best with PSO} \\\\")
+    lines.append("\t\t\\textbf{Workpiece} & \\textbf{Expert Operator} & \\textbf{Best CP/MIP} & \\textbf{Best with PSO} " + "\\\\")
     lines.append("\t\t\\hline")
     
     workpiece_display_names = {
@@ -674,9 +677,10 @@ def generate_best_solutions_table(data, provider_map, workpieces):
             provider_label = None
             img_solver = None
         
-        rl_value = data[workpiece]['rl']
+        # rl_value = data[workpiece]['rl']  # Uncomment to restore direct RL column
         
-        pso_solvers = ['pso_cp_pso', 'pso_mip_pso', 'pso_rl_pso', 'pso_eo_pso']
+        pso_solvers = ['pso_cp_pso', 'pso_mip_pso', 'pso_eo_pso']
+        # pso_solvers.append('pso_rl_pso')  # Uncomment to include RL-based PSO again
         pso_values = {s: data[workpiece][s] for s in pso_solvers if data[workpiece][s] is not None}
         pso_best = max(pso_values.values()) if pso_values else None
         pso_best_key = [s for s, v in pso_values.items() if v == pso_best][0] if pso_best else None
@@ -706,16 +710,15 @@ def generate_best_solutions_table(data, provider_map, workpieces):
         else:
             cpmip_cell = "--"
         
-        if rl_value is not None:
-            rl_formatted = format_objective(rl_value)
-            rl_img = copy_image_to_paper_dir(workpiece, 'rl')
-            if rl_img:
-                rl_cell = f"\\makecell{{${rl_formatted}$ \\\\ \\includegraphics[width=0.18\\linewidth]{{img/{rl_img}}}}}"
-            else:
-                rl_cell = f"\\makecell{{${rl_formatted}$}}"
-        else:
-            rl_cell = "--"
-        
+#         if rl_value is not None:
+#             rl_formatted = format_objective(rl_value)
+#             rl_img = copy_image_to_paper_dir(workpiece, 'rl')
+#             if rl_img:
+#                 rl_cell = f"\\makecell{{${rl_formatted}$ \\\\ \\includegraphics[width=0.18\\linewidth]{{img/{rl_img}}}}}"
+#             else:
+#                 rl_cell = f"\\makecell{{${rl_formatted}$}}"
+#         else:
+#             rl_cell = "--"        
         if pso_best is not None:
             pso_formatted = format_objective(pso_best)
             pso_img = copy_image_to_paper_dir(workpiece, pso_best_key)
@@ -726,7 +729,8 @@ def generate_best_solutions_table(data, provider_map, workpieces):
         else:
             pso_cell = "--"
         
-        row = f"\t\t\\makecell{{{display_name}}} & {eo_cell} & {cpmip_cell} & {rl_cell} & {pso_cell} \\\\"
+        row = f"\t\t\\makecell{{{display_name}}} & {eo_cell} & {cpmip_cell} & {pso_cell} \\\\"
+        # row = f"\t\t\\makecell{{{display_name}}} & {eo_cell} & {cpmip_cell} & {rl_cell} & {pso_cell} \\\\"  # RL version
         lines.append(row)
         lines.append("\t\t\\hline")
     
@@ -746,7 +750,8 @@ def main():
     fdist_data, solve_time_data, timeout_data, runtime_data = parse_runtime_reports(str(runtime_file))
     
     workpieces = ['spiral_stair_step', 'simple_stair_step', 'dashboard', 'speaker', 'coffee_table', 'door', 'door_porthole']
-    solvers_comparison = ['gecode', 'lns', 'chuffed', 'or-tools', 'gurobi', 'rl']
+    solvers_comparison = ['gecode', 'lns', 'chuffed', 'or-tools', 'gurobi']
+    # solvers_comparison.append('rl')  # Uncomment after restoring the RL comparison column
     solvers_objective = ['gecode', 'lns', 'chuffed', 'or-tools', 'gurobi']
     
     print("Generating tables...")
@@ -758,13 +763,13 @@ def main():
     output_file = base_path / 'all_tables.tex'
     with open(output_file, 'w') as f:
         f.write("% ============================================================================\n")
-        f.write("% TABLE 1: Simple Comparison (CP, MIP, RL without images)\n")
+        f.write("% TABLE 1: Simple Comparison (CP, MIP; RL excluded)\n")
         f.write("% ============================================================================\n\n")
         f.write(simple_comparison)
         f.write("\n\n")
         
         f.write("% ============================================================================\n")
-        f.write("% TABLE 2: Best Solutions (EO, CP/MIP, RL, Best with PSO)\n")
+        f.write("% TABLE 2: Best Solutions (EO, CP/MIP, Best with PSO; RL excluded)\n")
         f.write("% ============================================================================\n\n")
         f.write(best_solutions)
         f.write("\n\n")
@@ -776,8 +781,8 @@ def main():
     
     print(f"\n✓ All tables generated: {output_file}")
     print("\nGenerated tables:")
-    print("  1. Simple Comparison Table (CP, MIP, RL without images)")
-    print("  2. Best Solutions Table (EO, CP/MIP, RL, Best with PSO)")
+    print("  1. Simple Comparison Table (CP, MIP; RL excluded)")
+    print("  2. Best Solutions Table (EO, CP/MIP, Best with PSO; RL excluded)")
     print("  3. Unified Objective and Runtime Table ($\\fdist$, $\\finer$, solve times)")
     
     print("\nAlso generating individual table files...")

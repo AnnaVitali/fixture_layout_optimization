@@ -1,0 +1,48 @@
+\begin{table}[!b]
+	\centering
+	\footnotesize
+	\caption{Objective values for $\fdist$ and $\finer$, and solve time $t_{solve}$ in seconds to reach the best $\fdist$ solution. Timeout (300~s) is indicated by ``--''. Solutions where the solver reached optimality are marked with $^*$. For each workpiece, the maximum values of $\fdist$ and $\finer$ are highlighted in bold, including ties.}
+	\label{tab:objective_runtime}
+	\setlength{\tabcolsep}{2pt}
+	\begin{tabular}{llccccc}
+		\toprule
+		Workpiece & Metric & Gecode & \lns & Chuffed & OR-Tools & Gurobi \\
+		\midrule
+
+		\multirow{3}{*}{\makecell{Stair step\\spiral staircase}} & $\fdist$ & $45655{}^*$ & $45655$ & $45655{}^*$ & $45655{}^*$ & $\mathbf{45662.155{}^*}$ \\
+        & $\finer$ & \cellcolor{gray!15}$2.13968\times 10^{9}$ & \cellcolor{gray!15}$2.13968\times 10^{9}$ & \cellcolor{gray!15}$2.13960\times 10^{9}$ & \cellcolor{gray!15}$2.13968\times 10^{9}$ & \cellcolor{gray!15}$\mathbf{2.17089\times 10^{9}}$ \\
+		& $t_{solve}$ & 0.559 & -- & 0.326 & 0.120 & 2.930 \\
+		\midrule
+
+		\multirow{3}{*}{\makecell{Stair step\\simple staircase}} & $\fdist$ & $72823$ & $72823$ & $72823{}^*$ & $72721$ & $\mathbf{72826.000{}^*}$ \\
+        & $\finer$ & \cellcolor{gray!15}$6.76573\times 10^{9}$ & \cellcolor{gray!15}$6.76573\times 10^{9}$ & \cellcolor{gray!15}$6.76530\times 10^{9}$ & \cellcolor{gray!15}$6.48172\times 10^{9}$ & \cellcolor{gray!15}$\mathbf{6.76638\times 10^{9}}$ \\
+		& $t_{solve}$ & -- & -- & 3.386 & -- & 0.220 \\
+		\midrule
+
+		\multirow{3}{*}{\makecell{Dashboard}} & $\fdist$ & $\mathbf{55582{}^*}$ & $\mathbf{55582}$ & $\mathbf{55582{}^*}$ & $\mathbf{55582{}^*}$ & $\mathbf{55582.000{}^*}$ \\
+        & $\finer$ & \cellcolor{gray!15}$\mathbf{7.10094\times 10^{9}}$ & \cellcolor{gray!15}$\mathbf{7.10094\times 10^{9}}$ & \cellcolor{gray!15}$7.08735\times 10^{9}$ & \cellcolor{gray!15}$7.08735\times 10^{9}$ & \cellcolor{gray!15}$7.08735\times 10^{9}$ \\
+		& $t_{solve}$ & 0.044 & -- & 0.057 & 0.102 & 0.157 \\
+		\midrule
+
+		\multirow{3}{*}{\makecell{Speaker}} & $\fdist$ & $\mathbf{49548{}^*}$ & $\mathbf{49548}$ & $\mathbf{49548{}^*}$ & $\mathbf{49548{}^*}$ & $\mathbf{49548.000{}^*}$ \\
+        & $\finer$ & \cellcolor{gray!15}$\mathbf{2.93433\times 10^{9}}$ & \cellcolor{gray!15}$\mathbf{2.93433\times 10^{9}}$ & \cellcolor{gray!15}$\mathbf{2.93433\times 10^{9}}$ & \cellcolor{gray!15}$\mathbf{2.93433\times 10^{9}}$ & \cellcolor{gray!15}$\mathbf{2.93433\times 10^{9}}$ \\
+		& $t_{solve}$ & 165.018 & -- & 0.106 & 0.120 & 0.126 \\
+		\midrule
+
+		\multirow{3}{*}{\makecell{Coffee table}} & $\fdist$ & $137262$ & $185351$ & $192711$ & $122920$ & $\mathbf{201686.505}$ \\
+        & $\finer$ & \cellcolor{gray!15}$2.20750\times 10^{10}$ & \cellcolor{gray!15}$2.19967\times 10^{10}$ & \cellcolor{gray!15}$\mathbf{2.21449\times 10^{10}}$ & \cellcolor{gray!15}$9.10490\times 10^{9}$ & \cellcolor{gray!15}$2.19472\times 10^{10}$ \\
+		& $t_{solve}$ & -- & -- & -- & -- & -- \\
+		\midrule
+
+		\multirow{3}{*}{\makecell{Door}} & $\fdist$ & $261757$ & $\mathbf{521632}$ & -- & -- & $355744.000$ \\
+        & $\finer$ & \cellcolor{gray!15}$1.08442\times 10^{11}$ & \cellcolor{gray!15}$\mathbf{1.52925\times 10^{11}}$ & \cellcolor{gray!15}-- & \cellcolor{gray!15}-- & \cellcolor{gray!15}$1.17690\times 10^{11}$ \\
+		& $t_{solve}$ & -- & -- & -- & -- & -- \\
+		\midrule
+
+		\multirow{3}{*}{\makecell{Door\\with porthole}} & $\fdist$ & $261759$ & $\mathbf{393343}$ & -- & -- & $298186.000$ \\
+        & $\finer$ & \cellcolor{gray!15}$1.08422\times 10^{11}$ & \cellcolor{gray!15}$\mathbf{1.52861\times 10^{11}}$ & \cellcolor{gray!15}-- & \cellcolor{gray!15}-- & \cellcolor{gray!15}$1.39714\times 10^{11}$ \\
+		& $t_{solve}$ & -- & -- & -- & -- & -- \\
+
+		\bottomrule
+	\end{tabular}
+\end{table}

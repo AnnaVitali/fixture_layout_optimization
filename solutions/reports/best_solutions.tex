@@ -1,0 +1,27 @@
+\begin{table}[!t]
+	\centering
+	\renewcommand{\arraystretch}{1.3}
+	\setlength{\tabcolsep}{3pt}
+	\caption{Summary of the best solutions, corresponding solution providers, and moment of inertia values for the different workpieces. 
+		The workpiece perimeter is shown with solid lines. Dashed lines indicate extrusion areas, fixture regions are marked with diagonal hatching, and supporting bars are shown as shaded rectangles.}
+	\label{tab:visual_results}
+	\begin{tabular}{c c c c}
+		\hline
+		\textbf{Workpiece} & \textbf{Expert Operator} & \textbf{Best CP/MIP} & \textbf{Best with PSO} \\
+		\hline
+		\makecell{Spiral stair step} & \makecell{$1.98697\times 10^{9}$ \\ \includegraphics[width=0.18\linewidth]{img/spiral_stair_step_expert_operator.png}} & \makecell{MIP: $2.17089\times 10^{9}$ \\ \includegraphics[width=0.18\linewidth]{img/spiral_stair_step_mip_model_gurobi.png}} & \makecell{CP: $2.33687\times 10^{9}$ \\ \includegraphics[width=0.18\linewidth]{img/spiral_stair_step_pso_cp_pso.png}} \\
+		\hline
+		\makecell{Simple stair step} & \makecell{$4.00911\times 10^{9}$ \\ \includegraphics[width=0.18\linewidth]{img/simple_stair_step_expert_operator.png}} & \makecell{MIP: $6.76638\times 10^{9}$ \\ \includegraphics[width=0.18\linewidth]{img/simple_stair_step_mip_model_gurobi.png}} & \makecell{CP: $6.81108\times 10^{9}$ \\ \includegraphics[width=0.18\linewidth]{img/simple_stair_step_pso_cp_pso.png}} \\
+		\hline
+		\makecell{Dashboard} & \makecell{$6.29544\times 10^{9}$ \\ \includegraphics[width=0.18\linewidth]{img/dashboard_expert_operator.png}} & \makecell{CP: $7.10094\times 10^{9}$ \\ \includegraphics[width=0.18\linewidth]{img/dashboard_cp_model_gecode.png}} & \makecell{CP: $7.12226\times 10^{9}$ \\ \includegraphics[width=0.18\linewidth]{img/dashboard_pso_cp_pso.png}} \\
+		\hline
+		\makecell{Speaker} & \makecell{$2.69490\times 10^{9}$ \\ \includegraphics[width=0.18\linewidth]{img/speaker_expert_operator.png}} & \makecell{CP, MIP: $2.93433\times 10^{9}$ \\ \includegraphics[width=0.18\linewidth]{img/speaker_cp_model_gecode.png}} & \makecell{MIP: $2.95682\times 10^{9}$ \\ \includegraphics[width=0.18\linewidth]{img/speaker_pso_mip_pso.png}} \\
+		\hline
+		\makecell{Coffee table} & \makecell{$2.14371\times 10^{10}$ \\ \includegraphics[width=0.18\linewidth]{img/coffee_table_expert_operator.png}} & \makecell{CP: $2.21449\times 10^{10}$ \\ \includegraphics[width=0.18\linewidth]{img/coffee_table_cp_model_chuffed.png}} & \makecell{CP: $2.25868\times 10^{10}$ \\ \includegraphics[width=0.18\linewidth]{img/coffee_table_pso_cp_pso.png}} \\
+		\hline
+		\makecell{Door} & \makecell{$1.31109\times 10^{11}$ \\ \includegraphics[width=0.18\linewidth]{img/door_expert_operator.png}} & \makecell{CP: $1.52925\times 10^{11}$ \\ \includegraphics[width=0.18\linewidth]{img/door_LNS_cp_model_gecode.png}} & \makecell{CP: $1.73826\times 10^{11}$ \\ \includegraphics[width=0.18\linewidth]{img/door_pso_cp_pso.png}} \\
+		\hline
+		\makecell{Door porthole} & \makecell{$1.31109\times 10^{11}$ \\ \includegraphics[width=0.18\linewidth]{img/door_porthole_expert_operator.png}} & \makecell{CP: $1.52861\times 10^{11}$ \\ \includegraphics[width=0.18\linewidth]{img/door_porthole_LNS_cp_model_gecode.png}} & \makecell{CP: $1.70507\times 10^{11}$ \\ \includegraphics[width=0.18\linewidth]{img/door_porthole_pso_cp_pso.png}} \\
+		\hline
+	\end{tabular}
+\end{table}

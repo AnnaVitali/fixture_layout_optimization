@@ -1,0 +1,34 @@
+\begin{table}[t]
+	\centering
+	\footnotesize
+	\caption{Objective values $\finer$ comparison: CP solvers (best among Gecode, LNS, Chuffed, OR-Tools) and MIP solver (Gurobi). For each workpiece, the maximum value is highlighted in bold.}
+	\label{tab:comparison}
+	\setlength{\tabcolsep}{5pt}
+	\begin{tabular}{ccc}
+		\toprule
+		Workpiece & CP model & MIP model \\
+		\midrule
+
+		\makecell{Stair step\\spiral staircase} & $2.13968\times 10^{9}$ & $\mathbf{2.17089\times 10^{9}}$ \\
+		\midrule
+
+		\makecell{Stair step\\simple staircase} & $6.76573\times 10^{9}$ & $\mathbf{6.76638\times 10^{9}}$ \\
+		\midrule
+
+		\makecell{Dashboard} & $\mathbf{7.10094\times 10^{9}}$ & $7.08735\times 10^{9}$ \\
+		\midrule
+
+		\makecell{Speaker} & $\mathbf{2.93433\times 10^{9}}$ & $\mathbf{2.93433\times 10^{9}}$ \\
+		\midrule
+
+		\makecell{Coffee table} & $\mathbf{2.21449\times 10^{10}}$ & $2.19472\times 10^{10}$ \\
+		\midrule
+
+		\makecell{Door} & $\mathbf{1.52925\times 10^{11}}$ & $1.17690\times 10^{11}$ \\
+		\midrule
+
+		\makecell{Door\\with porthole} & $\mathbf{1.52861\times 10^{11}}$ & $1.39714\times 10^{11}$ \\
+
+		\bottomrule
+	\end{tabular}
+\end{table}

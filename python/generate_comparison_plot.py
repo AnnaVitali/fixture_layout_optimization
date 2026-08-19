@@ -98,10 +98,12 @@ def main():
     
     cp_raw = []
     mip_raw = []
-    rl_raw = []
+    # RL results temporarily excluded from plots.
+    # Uncomment these lines (and the corresponding blocks below) to include them again.
+    # rl_raw = []
     cp_pso_raw = []
     mip_pso_raw = []
-    rl_pso_raw = []
+    # rl_pso_raw = []
     eo_pso_raw = []
     expert_raw = []
     
@@ -116,8 +118,9 @@ def main():
         mip_val = data.get(wp_key, {}).get('mip_model_gurobi', None)
         mip_raw.append(mip_val)
         
-        rl_val = data.get(wp_key, {}).get('rl', None)
-        rl_raw.append(rl_val)
+        # Reinforcement learning retrieval kept for future use:
+        # rl_val = data.get(wp_key, {}).get('rl', None)
+        # rl_raw.append(rl_val)
         
         cp_pso_val = data.get(wp_key, {}).get('pso_cp_pso', None)
         cp_pso_raw.append(cp_pso_val)
@@ -125,8 +128,9 @@ def main():
         mip_pso_val = data.get(wp_key, {}).get('pso_mip_pso', None)
         mip_pso_raw.append(mip_pso_val)
         
-        rl_pso_val = data.get(wp_key, {}).get('pso_rl_pso', None)
-        rl_pso_raw.append(rl_pso_val)
+        # RL + PSO retrieval kept for future use:
+        # rl_pso_val = data.get(wp_key, {}).get('pso_rl_pso', None)
+        # rl_pso_raw.append(rl_pso_val)
         
         eo_pso_val = data.get(wp_key, {}).get('pso_eo_pso', None)
         eo_pso_raw.append(eo_pso_val)
@@ -136,30 +140,33 @@ def main():
     
     impr_cp = compute_improvement(cp_raw, expert_raw)
     impr_mip = compute_improvement(mip_raw, expert_raw)
-    impr_rl = compute_improvement(rl_raw, expert_raw)
+    # RL improvement calculations kept for future use:
+    # impr_rl = compute_improvement(rl_raw, expert_raw)
     impr_cp_pso = compute_improvement(cp_pso_raw, expert_raw)
     impr_mip_pso = compute_improvement(mip_pso_raw, expert_raw)
-    impr_rl_pso = compute_improvement(rl_pso_raw, expert_raw)
+    # impr_rl_pso = compute_improvement(rl_pso_raw, expert_raw)
     impr_eo_pso = compute_improvement(eo_pso_raw, expert_raw)
     
     # Compute average differences between RL and CP/MIP for first plot
-    rl_vs_cp_diffs = [rl - cp if (rl is not None and cp is not None) else None 
-                      for rl, cp in zip(impr_rl, impr_cp)]
-    rl_vs_mip_diffs = [rl - mip if (rl is not None and mip is not None) else None 
-                       for rl, mip in zip(impr_rl, impr_mip)]
+    # rl_vs_cp_diffs = [rl - cp if (rl is not None and cp is not None) else None 
+                      # for rl, cp in zip(impr_rl, impr_cp)]
+    # rl_vs_mip_diffs = [rl - mip if (rl is not None and mip is not None) else None 
+                       # for rl, mip in zip(impr_rl, impr_mip)]
     
-    rl_vs_cp_valid = [v for v in rl_vs_cp_diffs if v is not None]
-    rl_vs_mip_valid = [v for v in rl_vs_mip_diffs if v is not None]
+    # rl_vs_cp_valid = [v for v in rl_vs_cp_diffs if v is not None]
+    # rl_vs_mip_valid = [v for v in rl_vs_mip_diffs if v is not None]
     
-    avg_rl_vs_cp = np.mean(rl_vs_cp_valid) if rl_vs_cp_valid else 0
-    avg_rl_vs_mip = np.mean(rl_vs_mip_valid) if rl_vs_mip_valid else 0
+    # avg_rl_vs_cp = np.mean(rl_vs_cp_valid) if rl_vs_cp_valid else 0
+    # avg_rl_vs_mip = np.mean(rl_vs_mip_valid) if rl_vs_mip_valid else 0
     
-    print(f"\n=== Average Differences (First Plot - Overall) ===")
-    print(f"RL vs CP: {avg_rl_vs_cp:+.2f}% (RL is {abs(avg_rl_vs_cp):.2f}% {'better' if avg_rl_vs_cp > 0 else 'worse'})")
-    print(f"RL vs MIP: {avg_rl_vs_mip:+.2f}% (RL is {abs(avg_rl_vs_mip):.2f}% {'better' if avg_rl_vs_mip > 0 else 'worse'})")
-    print()
+    # print(f"\n=== Average Differences (First Plot - Overall) ===")
+    # print(f"RL vs CP: {avg_rl_vs_cp:+.2f}% (RL is {abs(avg_rl_vs_cp):.2f}% {'better' if avg_rl_vs_cp > 0 else 'worse'})")
+    # print(f"RL vs MIP: {avg_rl_vs_mip:+.2f}% (RL is {abs(avg_rl_vs_mip):.2f}% {'better' if avg_rl_vs_mip > 0 else 'worse'})")
+    # print()
     
-    all_improvements = [v for v in impr_cp + impr_mip + impr_rl + impr_cp_pso + impr_mip_pso + impr_rl_pso + impr_eo_pso if v is not None]
+    # RL series excluded from y-axis scaling while they are not plotted.
+    # To restore: add `impr_rl` and `impr_rl_pso` back into this expression.
+    all_improvements = [v for v in impr_cp + impr_mip + impr_cp_pso + impr_mip_pso + impr_eo_pso if v is not None]
     y_min = min(all_improvements) if all_improvements else 0
     y_max = max(all_improvements) if all_improvements else 0
     
@@ -168,13 +175,13 @@ def main():
     y_max += y_range * 0.1
     
     x = np.arange(len(workpieces_display))
-    width = 0.2
+    width = 0.25
     
     # Define colors for each solver (Wong 8-Color Palette - colorblind friendly)
     color_cp = '#56B4E9'      
     color_mip = '#E69F00'    
-    color_rl = '#D55E00'     
-    color_eo = '#009E73'     
+    # color_rl = '#D55E00'  # Keep for future RL re-enabling
+    color_eo = '#009E73'
     
     fig = plt.figure(figsize=(22, 6))
     
@@ -182,10 +189,10 @@ def main():
     
     impr_cp_masked = [v if v is not None else np.nan for v in impr_cp]
     impr_mip_masked = [v if v is not None else np.nan for v in impr_mip]
-    impr_rl_masked = [v if v is not None else np.nan for v in impr_rl]
+    # impr_rl_masked = [v if v is not None else np.nan for v in impr_rl]
     
     bars1 = plt.bar(
-        x - width,
+        x - width/2,
         impr_cp_masked,
         width,
         label="CP",
@@ -194,7 +201,7 @@ def main():
         linewidth=0.7,
     )
     bars2 = plt.bar(
-        x,
+        x + width/2,
         impr_mip_masked,
         width,
         label="MIP",
@@ -202,17 +209,18 @@ def main():
         edgecolor="black",
         linewidth=0.7,
     )
-    bars3 = plt.bar(
-        x + width,
-        impr_rl_masked,
-        width,
-        label="RL",
-        color=color_rl,
-        edgecolor="black",
-        linewidth=0.7,
-    )
+    # RL bar kept for future use:
+    # bars3 = plt.bar(
+    #     x + width,
+    #     impr_rl_masked,
+    #     width,
+    #     label="RL",
+    #     color=color_rl,
+    #     edgecolor="black",
+    #     linewidth=0.7,
+    # )
     
-    for bars in [bars1, bars2, bars3]:
+    for bars in [bars1, bars2]:
         for bar in bars:
             h = bar.get_height()
             
@@ -250,11 +258,11 @@ def main():
     
     impr_cp_pso_masked = [v if v is not None else np.nan for v in impr_cp_pso]
     impr_mip_pso_masked = [v if v is not None else np.nan for v in impr_mip_pso]
-    impr_rl_pso_masked = [v if v is not None else np.nan for v in impr_rl_pso]
+    # impr_rl_pso_masked = [v if v is not None else np.nan for v in impr_rl_pso]
     impr_eo_pso_masked = [v if v is not None else np.nan for v in impr_eo_pso]
     
     bars4 = plt.bar(
-        x - width*1.5,
+        x - width,
         impr_cp_pso_masked,
         width,
         label="CP + PSO",
@@ -263,7 +271,7 @@ def main():
         linewidth=0.7,
     )
     bars5 = plt.bar(
-        x - width*0.5,
+        x,
         impr_mip_pso_masked,
         width,
         label="MIP + PSO",
@@ -271,17 +279,18 @@ def main():
         edgecolor="black",
         linewidth=0.7,
     )
-    bars6 = plt.bar(
-        x + width*0.5,
-        impr_rl_pso_masked,
-        width,
-        label="RL + PSO",
-        color=color_rl,
-        edgecolor="black",
-        linewidth=0.7,
-    )
+    # RL + PSO bar kept for future use:
+    # bars6 = plt.bar(
+    #     x + width*0.5,
+    #     impr_rl_pso_masked,
+    #     width,
+    #     label="RL + PSO",
+    #     color=color_rl,
+    #     edgecolor="black",
+    #     linewidth=0.7,
+    # )
     bars7 = plt.bar(
-        x + width*1.5,
+        x + width,
         impr_eo_pso_masked,
         width,
         label="EO + PSO",
@@ -290,7 +299,7 @@ def main():
         linewidth=0.7,
     )
     
-    for bars in [bars4, bars5, bars6, bars7]:
+    for bars in [bars4, bars5, bars7]:
         for bar in bars:
             h = bar.get_height()
             
